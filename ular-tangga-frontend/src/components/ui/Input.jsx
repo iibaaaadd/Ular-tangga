@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import Icon from './Icon';
 
 const Input = ({
   label,
@@ -35,7 +36,7 @@ const Input = ({
       <div className="relative">
         {icon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gray-400">{icon}</span>
+            <Icon name={icon} className="text-gray-400" size={18} />
           </div>
         )}
         

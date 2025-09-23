@@ -46,12 +46,13 @@ export default api;
 // User API Services
 export const userService = {
   // Get all users with pagination (admin only)
-  async getUsers(page = 1, perPage = 10, search = '') {
+  async getUsers(page = 1, perPage = 10, search = '', role = '') {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
         per_page: perPage.toString(),
-        ...(search && { search })
+        ...(search && { search }),
+        ...(role && { role })
       });
       
       const response = await api.get(`/admin/users?${params}`);

@@ -23,6 +23,7 @@ class UserController extends Controller
 
         $perPage = $request->get('per_page', 10); // Default 10 items per page
         $search = $request->get('search', '');
+        $role = $request->get('role', ''); // Filter by role
 
         $query = User::select('id', 'name', 'email', 'role', 'created_at')
                     ->orderBy('created_at', 'desc');
@@ -31,9 +32,13 @@ class UserController extends Controller
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%')
-                  ->orWhere('role', 'like', '%' . $search . '%');
+                  ->orWhere('email', 'like', '%' . $search . '%');
             });
+        }
+
+        // Add role filter
+        if ($role && in_array($role, ['admin', 'teacher', 'student'])) {
+            $query->where('role', $role);
         }
 
         $users = $query->paginate($perPage);
@@ -44,8 +49,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'createdAt' => $user->created_at->format('Y-m-d'),
-                'status' => 'active' // Default status, bisa dikembangkan nanti
+                'createdAt' => $user->created_at->format('Y-m-d')
             ];
         });
 
@@ -95,8 +99,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'createdAt' => $user->created_at->format('Y-m-d'),
-                'status' => 'active'
+                'createdAt' => $user->created_at->format('Y-m-d')
             ],
             'message' => 'User created successfully'
         ], 201);
@@ -128,8 +131,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'createdAt' => $user->created_at->format('Y-m-d'),
-                'status' => 'active'
+                'createdAt' => $user->created_at->format('Y-m-d')
             ]
         ]);
     }
@@ -185,8 +187,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
-                'createdAt' => $user->created_at->format('Y-m-d'),
-                'status' => 'active'
+                'createdAt' => $user->created_at->format('Y-m-d')
             ],
             'message' => 'User updated successfully'
         ]);
