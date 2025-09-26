@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('tf_statements', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+            $table->boolean('is_true')->default(true);
             $table->timestamps();
         });
     }

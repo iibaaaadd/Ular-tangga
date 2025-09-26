@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('essay_keys', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+            $table->text('key_points');
+            $table->decimal('max_score', 6, 2)->default(10);
             $table->timestamps();
         });
     }
