@@ -145,3 +145,101 @@ export const authService = {
     }
   }
 };
+
+// Question API Services
+export const questionService = {
+  // Get all questions with optional filters
+  async getQuestions(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      
+      // Add filters if they exist
+      if (filters.subtype) params.append('subtype', filters.subtype);
+      if (filters.difficulty) params.append('difficulty', filters.difficulty);
+      if (filters.created_by) params.append('created_by', filters.created_by);
+      
+      const queryString = params.toString();
+      const url = queryString ? `/questions?${queryString}` : '/questions';
+      
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get single question by ID
+  async getQuestion(id) {
+    try {
+      const response = await api.get(`/questions/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Create new question (MCQ, True/False, or Essay)
+  async createQuestion(questionData) {
+    try {
+      const response = await api.post('/questions', questionData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Update existing question
+  async updateQuestion(id, questionData) {
+    try {
+      const response = await api.put(`/questions/${id}`, questionData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Delete question
+  async deleteQuestion(id) {
+    try {
+      const response = await api.delete(`/questions/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Helper function to create MCQ question
+  async createMCQQuestion(questionData) {
+    const mcqData = {
+      prompt: questionData.prompt,
+      difficulty: questionData.difficulty,
+      subtype: 'mcq',
+      options: questionData.options,
+      correct_option_index: questionData.correct_option_index
+    };
+    return this.createQuestion(mcqData);
+  },
+
+  // Helper function to create True/False question
+  async createTrueFalseQuestion(questionData) {
+    const tfData = {
+      prompt: questionData.prompt,
+      difficulty: questionData.difficulty,
+      subtype: 'true_false',
+      is_true: questionData.is_true
+    };
+    return this.createQuestion(tfData);
+  },
+
+  // Helper function to create Essay question
+  async createEssayQuestion(questionData) {
+    const essayData = {
+      prompt: questionData.prompt,
+      difficulty: questionData.difficulty,
+      subtype: 'essay',
+      key_points: questionData.key_points,
+      max_score: questionData.max_score
+    };
+    return this.createQuestion(essayData);
+  }
+};

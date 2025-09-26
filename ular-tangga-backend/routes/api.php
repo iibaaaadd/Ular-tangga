@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\QuestionController;
 
 // Public routes (no authentication required)
 Route::post('/register', [AuthController::class, 'register']);
@@ -25,6 +26,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [UserController::class, 'update']); // UPDATE user
         Route::delete('/{id}', [UserController::class, 'destroy']); // DELETE user
     });
+    
+    // Question Management CRUD (for teachers and admins)
+    Route::apiResource('questions', QuestionController::class);
     
     // Future game routes will go here
     // Route::get('/rooms', [RoomController::class, 'index']);
