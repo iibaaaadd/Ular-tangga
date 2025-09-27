@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Card, Button, Modal, Input, Table, Pagination, Select, useToast, useConfirm, ConfirmProvider,
-         AdminIcon, TeacherIcon, StudentIcon, PencilIcon, TrashIcon } from '../../../components/ui';
+         Icon } from '../../../components/ui';
 import { userService } from '../../../services/api';
 
 const UsersTab = () => {
@@ -80,9 +80,9 @@ const UsersTab = () => {
           role === 'teacher' ? 'bg-blue-100 text-blue-800' :
           'bg-green-100 text-green-800'
         }`}>
-          {role === 'admin' ? <AdminIcon className="w-3 h-3" /> : 
-           role === 'teacher' ? <TeacherIcon className="w-3 h-3" /> : 
-           <StudentIcon className="w-3 h-3" />}
+          {role === 'admin' ? <Icon name="admin" className="w-3 h-3" /> : 
+           role === 'teacher' ? <Icon name="teacher" className="w-3 h-3" /> : 
+           <Icon name="student" className="w-3 h-3" />}
           {role === 'admin' ? 'Admin' : role === 'teacher' ? 'Teacher' : 'Student'}
         </span>
       )
@@ -100,7 +100,7 @@ const UsersTab = () => {
             disabled={loading}
             className="inline-flex items-center gap-1"
           >
-            <PencilIcon className="w-3 h-3" />
+            <Icon name="edit" className="w-3 h-3" />
             Edit
           </Button>
           <Button
@@ -110,7 +110,7 @@ const UsersTab = () => {
             disabled={loading}
             className="inline-flex items-center gap-1 text-red-600 border-red-300 hover:bg-red-50"
           >
-            <TrashIcon className="w-3 h-3" />
+            <Icon name="delete" className="w-3 h-3" />
             Delete
           </Button>
         </div>

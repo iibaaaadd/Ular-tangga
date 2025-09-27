@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
-import { UsersIcon, ChartBarIcon, QuestionMarkCircleIcon, TrendingUpIcon, ConfirmProvider } from '../../components/ui';
+import { Icon, ConfirmProvider } from '../../components/ui';
 import { DashboardHeader, TabNavigation, TabContent } from './index';
 import { userService } from '../../services/api';
 
@@ -11,10 +11,10 @@ const AdminDashboard = () => {
   const [totalUsers, setTotalUsers] = useState(0);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-    { id: 'users', label: 'Users', icon: UsersIcon },
-    { id: 'questions', label: 'Bank Soal', icon: QuestionMarkCircleIcon },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUpIcon }
+    { id: 'overview', label: 'Overview', icon: 'chart' },
+    { id: 'users', label: 'Users', icon: 'users' },
+    { id: 'questions', label: 'Bank Soal', icon: 'questions' },
+    { id: 'analytics', label: 'Analytics', icon: 'analytics' }
   ];
 
   // Load initial data for overview

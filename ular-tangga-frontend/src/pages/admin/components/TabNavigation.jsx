@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { Icon } from '../../../components/ui';
 
 const TabNavigation = ({ tabs, activeTab, onTabChange }) => {
   return (
     <div className="mb-6">
       <nav className="flex space-x-2">
         {tabs.map((tab) => {
-          const IconComponent = tab.icon;
           return (
             <motion.button
               key={tab.id}
@@ -19,7 +19,7 @@ const TabNavigation = ({ tabs, activeTab, onTabChange }) => {
                   : 'text-gray-600 hover:bg-white/50'
               }`}
             >
-              <IconComponent className="w-4 h-4" />
+              <Icon name={tab.icon} className="w-4 h-4" />
               {tab.label}
             </motion.button>
           );

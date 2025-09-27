@@ -10,4 +10,3 @@ export { default as Select } from './Select';
 export { default as Alert, useToast } from './Alert';
 export { default as ConfirmDialog, useConfirm, ConfirmProvider } from './ConfirmDialog';
 export { ToastProvider, useToastContext } from './ToastProvider';
-export * from './Icons';

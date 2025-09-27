@@ -17,14 +17,14 @@ const ConfirmDialog = ({
   const getTypeConfig = () => {
     const configs = {
       danger: {
-        icon: icon || 'trash',
+        icon: icon || 'delete',
         iconBg: 'bg-red-100',
         iconColor: 'text-red-600',
         confirmBg: 'bg-red-600 hover:bg-red-700',
         confirmText: 'text-white'
       },
       warning: {
-        icon: icon || 'alert-triangle',
+        icon: icon || 'warning',
         iconBg: 'bg-yellow-100',
         iconColor: 'text-yellow-600',
         confirmBg: 'bg-yellow-600 hover:bg-yellow-700',

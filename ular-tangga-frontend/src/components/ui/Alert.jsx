@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Icon from './Icon';
 
@@ -9,7 +9,7 @@ const Alert = ({
   isVisible = false,
   onClose,
   autoClose = true,
-  duration = 5000,
+  duration = 3000,
   position = 'top-right',
   showIcon = true,
   showCloseButton = true,
@@ -37,6 +37,9 @@ const Alert = ({
     }
   };
 
+  // Calculate progress bar duration to account for close animation delay
+  const progressDuration = autoClose ? (duration - 300) / 1000 : duration / 1000;
+
   const getAlertConfig = () => {
     const configs = {
       success: {
@@ -50,7 +53,7 @@ const Alert = ({
         progressBar: 'bg-green-500'
       },
       error: {
-        icon: 'x',
+        icon: 'error',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-200',
         textColor: 'text-red-800',
@@ -60,7 +63,7 @@ const Alert = ({
         progressBar: 'bg-red-500'
       },
       warning: {
-        icon: 'alert-triangle',
+        icon: 'warning',
         bgColor: 'bg-yellow-50',
         borderColor: 'border-yellow-200',
         textColor: 'text-yellow-800',
@@ -149,7 +152,7 @@ const Alert = ({
               <motion.div
                 initial={{ width: '100%' }}
                 animate={{ width: '0%' }}
-                transition={{ duration: duration / 1000, ease: "linear" }}
+                transition={{ duration: progressDuration, ease: "linear" }}
                 className={`h-1 ${config.progressBar}`}
               />
             )}
@@ -163,6 +166,15 @@ const Alert = ({
 // Toast notification hook
 export const useToast = () => {
   const [toasts, setToasts] = useState([]);
+  const timersRef = useRef(new Map());
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(timer => clearTimeout(timer));
+      timersRef.current.clear();
+    };
+  }, []);
 
   const showToast = (options) => {
     const id = Date.now() + Math.random();
@@ -171,31 +183,41 @@ export const useToast = () => {
     setToasts(prev => [...prev, toast]);
 
     // Auto remove after duration
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       removeToast(id);
-    }, options.duration || 5000);
+    }, options.duration || 3000);
+    
+    // Store timer reference for cleanup
+    timersRef.current.set(id, timer);
 
     return id;
   };
 
   const removeToast = (id) => {
+    // Clear timer if exists
+    const timer = timersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
+    
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   const success = (title, message, options = {}) => {
-    return showToast({ type: 'success', title, message, ...options });
+    return showToast({ type: 'success', title, message, showIcon: true, ...options });
   };
 
   const error = (title, message, options = {}) => {
-    return showToast({ type: 'error', title, message, ...options });
+    return showToast({ type: 'error', title, message, showIcon: true, ...options });
   };
 
   const warning = (title, message, options = {}) => {
-    return showToast({ type: 'warning', title, message, ...options });
+    return showToast({ type: 'warning', title, message, showIcon: true, ...options });
   };
 
   const info = (title, message, options = {}) => {
-    return showToast({ type: 'info', title, message, ...options });
+    return showToast({ type: 'info', title, message, showIcon: true, ...options });
   };
 
   const ToastContainer = () => (

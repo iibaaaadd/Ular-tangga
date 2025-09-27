@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Card, Button, Modal, Input, Table, Select, Pagination, useToast, useConfirm } from "./ui";
+import { Card, Button, Modal, Input, Table, Select, Pagination, useConfirm } from "./ui";
+import { useToastContext } from "./ui/ToastProvider";
 import { questionService } from "../services/api";
 
 const QuestionBank = () => {
@@ -9,6 +10,7 @@ const QuestionBank = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -19,7 +21,7 @@ const QuestionBank = () => {
     to: 0
   });
   
-  const toast = useToast();
+  const toast = useToastContext();
   const { confirm } = useConfirm();
   
   const [formData, setFormData] = useState({
@@ -207,6 +209,8 @@ const QuestionBank = () => {
           'matching': 'Menjodohkan', 
           'true_false': 'True/False'
         };
+        handleCloseModal();
+        await loadQuestions();
         toast.success('Berhasil!', `Soal ${typeNames[questionData.subtype]} berhasil diperbarui!`);
       } else {
         await questionService.createQuestion(questionData);
@@ -215,11 +219,10 @@ const QuestionBank = () => {
           'matching': 'Menjodohkan',
           'true_false': 'True/False'
         };
+        handleCloseModal();
+        await loadQuestions();
         toast.success('Berhasil!', `Soal ${typeNames[questionData.subtype]} baru berhasil ditambahkan!`);
       }
-      
-      await loadQuestions();
-      handleCloseModal();
     } catch (error) {
       console.error('Error saving question:', error);
       // Show more detailed error message
@@ -273,8 +276,11 @@ const QuestionBank = () => {
       key: 'correctAnswer', 
       header: 'Jawaban Benar',
       render: (answer) => (
-        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-          ✅ {answer}
+        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-md text-sm font-medium flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          {answer}
         </span>
       )
     },
@@ -282,12 +288,12 @@ const QuestionBank = () => {
       key: 'difficulty', 
       header: 'Tingkat',
       render: (difficulty) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
           difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
           difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
           'bg-red-100 text-red-800'
         }`}>
-          {difficulty === 'Easy' ? '😊 Mudah' : difficulty === 'Medium' ? '🤔 Sedang' : '😰 Sulit'}
+          {difficulty === 'Easy' ? 'Mudah' : difficulty === 'Medium' ? 'Sedang' : 'Sulit'}
         </span>
       )
     },
@@ -317,7 +323,9 @@ const QuestionBank = () => {
             }}
             className="text-red-600 hover:text-red-800 text-sm font-medium"
           >
-            🗑️ Hapus
+            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>Hapus
           </button>
         </div>
       )
@@ -339,7 +347,7 @@ const QuestionBank = () => {
       header: 'Jumlah Pasangan',
       render: (totalPairs) => (
         <div className="text-center">
-          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-md text-sm font-medium">
             {totalPairs || 0} pairs
           </span>
         </div>
@@ -350,7 +358,7 @@ const QuestionBank = () => {
       header: 'Pasangan Benar',
       render: (correctPairs) => (
         <div className="text-center">
-          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-sm font-medium">
             {(correctPairs || []).length} benar
           </span>
         </div>
@@ -360,12 +368,12 @@ const QuestionBank = () => {
       key: 'difficulty', 
       header: 'Tingkat',
       render: (difficulty) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
           difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
           difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
           'bg-red-100 text-red-800'
         }`}>
-          {difficulty === 'Easy' ? '😊 Mudah' : difficulty === 'Medium' ? '🤔 Sedang' : '😰 Sulit'}
+          {difficulty === 'Easy' ? 'Mudah' : difficulty === 'Medium' ? 'Sedang' : 'Sulit'}
         </span>
       )
     },
@@ -395,7 +403,9 @@ const QuestionBank = () => {
             }}
             className="text-red-600 hover:text-red-800 text-sm font-medium"
           >
-            🗑️ Hapus
+            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>Hapus
           </button>
         </div>
       )
@@ -416,10 +426,24 @@ const QuestionBank = () => {
       key: 'correctAnswer', 
       header: 'Jawaban Benar',
       render: (answer) => (
-        <span className={`px-2 py-1 rounded-full text-sm font-medium ${
+        <span className={`px-2 py-1 rounded-md text-sm font-medium flex items-center gap-1 ${
           answer === 'Benar' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
-          {answer === 'Benar' ? '✅ Benar' : '❌ Salah'}
+          {answer === 'Benar' ? (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Benar
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Salah
+            </>
+          )}
         </span>
       )
     },
@@ -427,12 +451,12 @@ const QuestionBank = () => {
       key: 'difficulty', 
       header: 'Tingkat',
       render: (difficulty) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
           difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
           difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
           'bg-red-100 text-red-800'
         }`}>
-          {difficulty === 'Easy' ? '😊 Mudah' : difficulty === 'Medium' ? '🤔 Sedang' : '😰 Sulit'}
+          {difficulty === 'Easy' ? 'Mudah' : difficulty === 'Medium' ? 'Sedang' : 'Sulit'}
         </span>
       )
     },
@@ -462,7 +486,9 @@ const QuestionBank = () => {
             }}
             className="text-red-600 hover:text-red-800 text-sm font-medium"
           >
-            🗑️ Hapus
+            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>Hapus
           </button>
         </div>
       )
@@ -635,7 +661,10 @@ const QuestionBank = () => {
       {loading ? (
         <Card>
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <svg className="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
             <span className="ml-3 text-gray-600">Memuat data soal...</span>
           </div>
         </Card>
@@ -686,17 +715,23 @@ const QuestionBank = () => {
             </div>
             {difficultyFilter && (
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Filter: {difficultyFilter === 'easy' ? '😊 Mudah' : difficultyFilter === 'medium' ? '🤔 Sedang' : '😰 Sulit'}
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  Filter: {difficultyFilter === 'easy' ? 'Mudah' : difficultyFilter === 'medium' ? 'Sedang' : 'Sulit'}
                 </span>
                 <button
                   onClick={() => {
                     setDifficultyFilter('');
                     resetPagination();
                   }}
-                  className="text-xs text-red-600 hover:text-red-800 underline"
+                  className="text-xs text-red-600 hover:text-red-800 p-1"
+                  title="Hapus Filter"
                 >
-                  Hapus
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             )}
@@ -725,7 +760,10 @@ const QuestionBank = () => {
             <>
               {loading ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-600 rounded-full mb-4" />
+                  <svg className="animate-spin inline-block w-8 h-8 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                   <p className="text-gray-500">Memuat data soal...</p>
                 </div>
               ) : (
@@ -991,7 +1029,6 @@ const QuestionBank = () => {
         )}
       </Modal>
       </div>
-      <toast.ToastContainer />
     </div>
   );
 };
