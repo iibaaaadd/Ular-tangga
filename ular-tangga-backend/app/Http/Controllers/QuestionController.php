@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Question;
 use App\Models\McqOption;
 use App\Models\TfStatement;
-use App\Models\EssayKey;
+use App\Models\MatchingPair;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +20,7 @@ class QuestionController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Question::with(['creator', 'mcqOptions', 'tfStatement', 'essayKey']);
+            $query = Question::with(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
 
             // Filter by subtype if provided
             if ($request->has('subtype')) {
@@ -37,11 +37,25 @@ class QuestionController extends Controller
                 $query->where('created_by', $request->created_by);
             }
 
-            $questions = $query->orderBy('created_at', 'desc')->get();
+            // Get pagination parameters
+            $perPage = $request->get('per_page', 10);
+            $page = $request->get('page', 1);
+
+            // Apply pagination
+            $questions = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'success' => true,
-                'data' => $questions
+                'data' => $questions->items(),
+                'meta' => [
+                    'current_page' => $questions->currentPage(),
+                    'per_page' => $questions->perPage(),
+                    'total' => $questions->total(),
+                    'last_page' => $questions->lastPage(),
+                    'from' => $questions->firstItem(),
+                    'to' => $questions->lastItem(),
+                    'has_more_pages' => $questions->hasMorePages()
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -61,7 +75,7 @@ class QuestionController extends Controller
             $rules = [
                 'prompt' => 'required|string|max:1000',
                 'difficulty' => 'required|in:easy,medium,hard',
-                'subtype' => 'required|in:mcq,true_false,essay'
+                'subtype' => 'required|in:mcq,true_false,matching'
             ];
 
             // Additional validation based on subtype
@@ -71,9 +85,12 @@ class QuestionController extends Controller
                 $rules['correct_option_index'] = 'required|integer|min:0|max:5';
             } elseif ($request->subtype === 'true_false') {
                 $rules['is_true'] = 'required|boolean';
-            } elseif ($request->subtype === 'essay') {
-                $rules['key_points'] = 'required|string|max:2000';
-                $rules['max_score'] = 'numeric|min:1|max:100';
+            } elseif ($request->subtype === 'matching') {
+                $rules['pairs'] = 'required|array|min:2|max:10';
+                $rules['pairs.*.left_item'] = 'required|string|max:255';
+                $rules['pairs.*.right_item'] = 'required|string|max:255';
+                $rules['pairs.*.is_correct'] = 'required|boolean';
+                $rules['pairs.*.order'] = 'integer|min:0';
             }
 
             $validated = $request->validate($rules);
@@ -117,19 +134,23 @@ class QuestionController extends Controller
                     ]);
                     break;
 
-                case 'essay':
-                    EssayKey::create([
-                        'question_id' => $question->id,
-                        'key_points' => $validated['key_points'],
-                        'max_score' => $validated['max_score'] ?? $baseScore
-                    ]);
+                case 'matching':
+                    foreach ($validated['pairs'] as $index => $pair) {
+                        MatchingPair::create([
+                            'question_id' => $question->id,
+                            'left_item' => $pair['left_item'],
+                            'right_item' => $pair['right_item'],
+                            'is_correct' => $pair['is_correct'],
+                            'order' => $pair['order'] ?? $index + 1
+                        ]);
+                    }
                     break;
             }
 
             DB::commit();
 
             // Load relationships for response
-            $question->load(['creator', 'mcqOptions', 'tfStatement', 'essayKey']);
+            $question->load(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
 
             return response()->json([
                 'success' => true,
@@ -159,7 +180,7 @@ class QuestionController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $question = Question::with(['creator', 'mcqOptions', 'tfStatement', 'essayKey'])
+            $question = Question::with(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs'])
                               ->findOrFail($id);
 
             return response()->json([
@@ -186,7 +207,7 @@ class QuestionController extends Controller
             $rules = [
                 'prompt' => 'required|string|max:1000',
                 'difficulty' => 'required|in:easy,medium,hard',
-                'subtype' => 'required|in:mcq,true_false,essay'
+                'subtype' => 'required|in:mcq,true_false,matching'
             ];
 
             // Additional validation based on subtype
@@ -196,9 +217,12 @@ class QuestionController extends Controller
                 $rules['correct_option_index'] = 'required|integer|min:0|max:5';
             } elseif ($request->subtype === 'true_false') {
                 $rules['is_true'] = 'required|boolean';
-            } elseif ($request->subtype === 'essay') {
-                $rules['key_points'] = 'required|string|max:2000';
-                $rules['max_score'] = 'numeric|min:1|max:100';
+            } elseif ($request->subtype === 'matching') {
+                $rules['pairs'] = 'required|array|min:2|max:10';
+                $rules['pairs.*.left_item'] = 'required|string|max:255';
+                $rules['pairs.*.right_item'] = 'required|string|max:255';
+                $rules['pairs.*.is_correct'] = 'required|boolean';
+                $rules['pairs.*.order'] = 'integer|min:0';
             }
 
             $validated = $request->validate($rules);
@@ -224,7 +248,7 @@ class QuestionController extends Controller
             // Clear existing relations
             $question->mcqOptions()->delete();
             $question->tfStatement()->delete();
-            $question->essayKey()->delete();
+            $question->matchingPairs()->delete();
 
             // Handle different subtypes
             switch ($validated['subtype']) {
@@ -245,19 +269,23 @@ class QuestionController extends Controller
                     ]);
                     break;
 
-                case 'essay':
-                    EssayKey::create([
-                        'question_id' => $question->id,
-                        'key_points' => $validated['key_points'],
-                        'max_score' => $validated['max_score'] ?? $baseScore
-                    ]);
+                case 'matching':
+                    foreach ($validated['pairs'] as $index => $pair) {
+                        MatchingPair::create([
+                            'question_id' => $question->id,
+                            'left_item' => $pair['left_item'],
+                            'right_item' => $pair['right_item'],
+                            'is_correct' => $pair['is_correct'],
+                            'order' => $pair['order'] ?? $index + 1
+                        ]);
+                    }
                     break;
             }
 
             DB::commit();
 
             // Load relationships for response
-            $question->load(['creator', 'mcqOptions', 'tfStatement', 'essayKey']);
+            $question->load(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
 
             return response()->json([
                 'success' => true,
@@ -294,7 +322,7 @@ class QuestionController extends Controller
             // Delete related records (cascade delete should handle this, but let's be explicit)
             $question->mcqOptions()->delete();
             $question->tfStatement()->delete();
-            $question->essayKey()->delete();
+            $question->matchingPairs()->delete();
             
             // Delete the question
             $question->delete();

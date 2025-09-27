@@ -16,7 +16,7 @@ return new class extends Migration
             $table->text('prompt');
             $table->enum('difficulty', ['easy', 'medium', 'hard']);
             $table->decimal('base_score', 6, 2)->default(10);
-            $table->enum('subtype', ['mcq', 'true_false', 'essay']);
+            $table->enum('subtype', ['mcq', 'true_false', 'matching']);
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->index(['difficulty', 'subtype']);

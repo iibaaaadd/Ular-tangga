@@ -42,10 +42,10 @@ class Question extends Model
         return $this->hasOne(TfStatement::class);
     }
 
-    // Relasi ke Essay Key
-    public function essayKey(): HasOne
+    // Relasi ke Matching Pairs
+    public function matchingPairs(): HasMany
     {
-        return $this->hasOne(EssayKey::class);
+        return $this->hasMany(MatchingPair::class);
     }
 
     // Helper methods
@@ -59,8 +59,8 @@ class Question extends Model
         return $this->subtype === 'true_false';
     }
 
-    public function isEssay(): bool
+    public function isMatching(): bool
     {
-        return $this->subtype === 'essay';
+        return $this->subtype === 'matching';
     }
 }

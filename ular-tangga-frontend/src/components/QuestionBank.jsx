@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Card, Button, Modal, Input, Table } from "./ui";
+import { Card, Button, Modal, Input, Table, Select, Pagination, useToast, useConfirm } from "./ui";
 import { questionService } from "../services/api";
 
 const QuestionBank = () => {
@@ -9,23 +9,38 @@ const QuestionBank = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [difficultyFilter, setDifficultyFilter] = useState('');
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
+  
+  const toast = useToast();
+  const { confirm } = useConfirm();
+  
   const [formData, setFormData] = useState({
     prompt: '',
     difficulty: 'easy', // Use lowercase to match backend
     // MCQ fields
     options: ['', '', '', ''],
     correctAnswerIndex: 0,
-    // Essay fields
-    keyPoints: '',
-    maxScore: null,
+    // Matching fields
+    pairs: [
+      { left_item: '', right_item: '', is_correct: true, order: 1 },
+      { left_item: '', right_item: '', is_correct: true, order: 2 }
+    ],
     // True/False fields
     isTrue: true
   });
 
-  // Load questions when component mounts or tab changes
+  // Load questions when component mounts or tab/filter/page changes
   useEffect(() => {
     loadQuestions();
-  }, [activeTab]);
+  }, [activeTab, difficultyFilter, pagination.current_page]);
 
   const loadQuestions = async () => {
     try {
@@ -35,22 +50,52 @@ const QuestionBank = () => {
         case 'multiple_choice':
           subtype = 'mcq';
           break;
-        case 'essay':
-          subtype = 'essay';
+        case 'matching':
+          subtype = 'matching';
           break;
         case 'true_false':
           subtype = 'true_false';
           break;
       }
       
-      const response = await questionService.getQuestions({ subtype });
+      const params = { 
+        subtype,
+        page: pagination.current_page,
+        per_page: pagination.per_page
+      };
+      if (difficultyFilter) {
+        params.difficulty = difficultyFilter;
+      }
+      
+      const response = await questionService.getQuestions(params);
       setQuestions(response.data || []);
+      
+      // Update pagination info from response
+      if (response.meta) {
+        setPagination({
+          current_page: response.meta.current_page || 1,
+          per_page: response.meta.per_page || 10,
+          total: response.meta.total || 0,
+          last_page: response.meta.last_page || 1,
+          from: response.meta.from || 0,
+          to: response.meta.to || 0
+        });
+      }
     } catch (error) {
       console.error('Error loading questions:', error);
       setQuestions([]);
+      toast.error('Gagal Memuat Data', 'Gagal memuat daftar soal. Silakan refresh halaman!');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, current_page: page }));
+  };
+
+  const resetPagination = () => {
+    setPagination(prev => ({ ...prev, current_page: 1 }));
   };
   // Helper functions for data transformation
   const transformQuestionData = (question) => {
@@ -78,18 +123,16 @@ const QuestionBank = () => {
       };
     }
     
-    if (question.subtype === 'essay') {
+    if (question.subtype === 'matching') {
       // Try both camelCase and snake_case
-      const essayData = question.essayKey || question.essay_key;
+      const matchingData = question.matchingPairs || question.matching_pairs || [];
       
       return {
         ...baseData,
-        category: 'Essay',
-        keywords: essayData?.key_points ? 
-          essayData.key_points.split(',').map(k => k.trim()).filter(k => k) : 
-          [],
-        keyPoints: essayData?.key_points || '',
-        maxScore: essayData?.max_score
+        category: 'Matching',
+        pairs: matchingData,
+        correctPairs: matchingData.filter(pair => pair.is_correct),
+        totalPairs: matchingData.length
       };
     }
     
@@ -128,13 +171,25 @@ const QuestionBank = () => {
           options: formData.options.filter(option => option.trim() !== ''), // Remove empty options
           correct_option_index: formData.correctAnswerIndex
         };
-      } else if (activeTab === 'essay') {
+      } else if (activeTab === 'matching') {
+        // Validate matching pairs
+        const validPairs = formData.pairs.filter(pair => 
+          pair.left_item.trim() !== '' && pair.right_item.trim() !== ''
+        );
+        
+        if (validPairs.length < 2) {
+          toast.warning('Validasi Error', 'Minimal harus ada 2 pasangan yang valid untuk soal menjodohkan!');
+          return;
+        }
+        
         questionData = {
           prompt: formData.prompt,
           difficulty: formData.difficulty,
-          subtype: 'essay',
-          key_points: formData.keyPoints || '',
-          max_score: formData.maxScore || null
+          subtype: 'matching',
+          pairs: validPairs.map((pair, index) => ({
+            ...pair,
+            order: index + 1
+          }))
         };
       } else if (activeTab === 'true_false') {
         questionData = {
@@ -147,8 +202,20 @@ const QuestionBank = () => {
 
       if (selectedQuestion) {
         await questionService.updateQuestion(selectedQuestion.id, questionData);
+        const typeNames = {
+          'mcq': 'Multiple Choice',
+          'matching': 'Menjodohkan', 
+          'true_false': 'True/False'
+        };
+        toast.success('Berhasil!', `Soal ${typeNames[questionData.subtype]} berhasil diperbarui!`);
       } else {
         await questionService.createQuestion(questionData);
+        const typeNames = {
+          'mcq': 'Multiple Choice',
+          'matching': 'Menjodohkan',
+          'true_false': 'True/False'
+        };
+        toast.success('Berhasil!', `Soal ${typeNames[questionData.subtype]} baru berhasil ditambahkan!`);
       }
       
       await loadQuestions();
@@ -157,22 +224,36 @@ const QuestionBank = () => {
       console.error('Error saving question:', error);
       // Show more detailed error message
       if (error.response && error.response.data && error.response.data.errors) {
-        const errorMessages = Object.values(error.response.data.errors).flat().join('\n');
-        alert(`Gagal menyimpan soal:\n${errorMessages}`);
+        const errorMessages = Object.values(error.response.data.errors).flat().join(', ');
+        toast.error('Gagal Menyimpan', `Terjadi kesalahan: ${errorMessages}`);
       } else {
-        alert('Gagal menyimpan soal. Silakan coba lagi.');
+        toast.error('Gagal Menyimpan', 'Gagal menyimpan soal. Silakan periksa kembali data yang dimasukkan!');
       }
     }
   };
 
   const handleDeleteQuestion = async (question) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus soal ini?')) {
+    const questionType = question.category || question.subtype?.toUpperCase() || 'Soal';
+    const questionText = question.question || question.prompt || '';
+    const truncatedQuestion = questionText.length > 50 ? 
+      questionText.substring(0, 50) + '...' : questionText;
+    
+    const isConfirmed = await confirm({
+      title: `Hapus ${questionType}`,
+      message: `Apakah Anda yakin ingin menghapus soal ini?\n\n"${truncatedQuestion}"\n\nTindakan ini tidak dapat dibatalkan!`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger'
+    });
+
+    if (isConfirmed) {
       try {
         await questionService.deleteQuestion(question.id);
         await loadQuestions();
+        toast.success('Berhasil!', `Soal ${questionType} berhasil dihapus!`);
       } catch (error) {
         console.error('Error deleting question:', error);
-        alert('Gagal menghapus soal. Silakan coba lagi.');
+        toast.error('Gagal Menghapus', 'Gagal menghapus soal. Silakan coba lagi!');
       }
     }
   };
@@ -197,7 +278,6 @@ const QuestionBank = () => {
         </span>
       )
     },
-    { key: 'category', header: 'Kategori' },
     { 
       key: 'difficulty', 
       header: 'Tingkat',
@@ -214,9 +294,8 @@ const QuestionBank = () => {
     { 
       key: 'base_score', 
       header: 'Skor',
-      render: (score) => `${score || 0} pts`
+      render: (score) => `${parseInt(score) || 0} pts`
     },
-    { key: 'createdAt', header: 'Tgl Dibuat' },
     {
       key: 'actions',
       header: 'Aksi',
@@ -245,7 +324,7 @@ const QuestionBank = () => {
     }
   ];
 
-  const essayColumns = [
+  const matchingColumns = [
     { 
       key: 'question', 
       header: 'Pertanyaan',
@@ -256,27 +335,27 @@ const QuestionBank = () => {
       )
     },
     { 
-      key: 'keywords', 
-      header: 'Kata Kunci',
-      render: (keywords) => (
-        <div className="flex flex-wrap gap-1">
-          {(keywords || []).slice(0, 3).map((keyword, index) => (
-            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-              {keyword}
-            </span>
-          ))}
-          {(keywords || []).length > 3 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-              +{(keywords || []).length - 3}
-            </span>
-          )}
-          {(!keywords || keywords.length === 0) && (
-            <span className="text-gray-400 text-xs italic">Tidak ada kata kunci</span>
-          )}
+      key: 'totalPairs', 
+      header: 'Jumlah Pasangan',
+      render: (totalPairs) => (
+        <div className="text-center">
+          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+            {totalPairs || 0} pairs
+          </span>
         </div>
       )
     },
-    { key: 'category', header: 'Kategori' },
+    { 
+      key: 'correctPairs', 
+      header: 'Pasangan Benar',
+      render: (correctPairs) => (
+        <div className="text-center">
+          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+            {(correctPairs || []).length} benar
+          </span>
+        </div>
+      )
+    },
     { 
       key: 'difficulty', 
       header: 'Tingkat',
@@ -292,10 +371,9 @@ const QuestionBank = () => {
     },
     { 
       key: 'base_score', 
-      header: 'Skor Max',
-      render: (score) => `${score || 0} pts`
+      header: 'Skor',
+      render: (score) => `${parseInt(score) || 0} pts`
     },
-    { key: 'createdAt', header: 'Tgl Dibuat' },
     {
       key: 'actions',
       header: 'Aksi',
@@ -345,7 +423,6 @@ const QuestionBank = () => {
         </span>
       )
     },
-    { key: 'category', header: 'Kategori' },
     { 
       key: 'difficulty', 
       header: 'Tingkat',
@@ -359,7 +436,11 @@ const QuestionBank = () => {
         </span>
       )
     },
-    { key: 'createdAt', header: 'Tgl Dibuat' },
+    { 
+      key: 'base_score', 
+      header: 'Skor',
+      render: (score) => `${parseInt(score) || 0} pts`
+    },
     {
       key: 'actions',
       header: 'Aksi',
@@ -397,8 +478,8 @@ const QuestionBank = () => {
     switch (activeTab) {
       case 'multiple_choice':
         return multipleChoiceColumns;
-      case 'essay':
-        return essayColumns;
+      case 'matching':
+        return matchingColumns;
       case 'true_false':
         return trueFalseColumns;
       default:
@@ -425,18 +506,27 @@ const QuestionBank = () => {
             question.mcq_options.map(opt => opt.option_text) :
             (question.options || ['', '', '', '']),
           correctAnswerIndex: correctIndex >= 0 ? correctIndex : 0,
-          keyPoints: '',
-          maxScore: null,
+          pairs: [
+            { left_item: '', right_item: '', is_correct: true, order: 1 },
+            { left_item: '', right_item: '', is_correct: true, order: 2 }
+          ],
           isTrue: true
         });
-      } else if (activeTab === 'essay') {
+      } else if (activeTab === 'matching') {
+        const pairs = question.pairs || question.matchingPairs || question.matching_pairs || [
+          { left_item: '', right_item: '', is_correct: true, order: 1 },
+          { left_item: '', right_item: '', is_correct: true, order: 2 }
+        ];
+        
         setFormData({
           prompt: question.prompt || question.question || '',
           difficulty: baseDifficulty,
           options: ['', '', '', ''],
           correctAnswerIndex: 0,
-          keyPoints: question.key_points || '',
-          maxScore: question.max_score || null,
+          pairs: pairs.length > 0 ? pairs : [
+            { left_item: '', right_item: '', is_correct: true, order: 1 },
+            { left_item: '', right_item: '', is_correct: true, order: 2 }
+          ],
           isTrue: true
         });
       } else if (activeTab === 'true_false') {
@@ -447,8 +537,10 @@ const QuestionBank = () => {
           difficulty: baseDifficulty,
           options: ['', '', '', ''],
           correctAnswerIndex: 0,
-          keyPoints: '',
-          maxScore: null,
+          pairs: [
+            { left_item: '', right_item: '', is_correct: true, order: 1 },
+            { left_item: '', right_item: '', is_correct: true, order: 2 }
+          ],
           isTrue: question.is_true !== undefined ? question.is_true : true
         });
         console.log('Set formData.isTrue to:', question.is_true !== undefined ? question.is_true : true); // Debug log
@@ -460,8 +552,10 @@ const QuestionBank = () => {
         difficulty: 'easy',
         options: ['', '', '', ''],
         correctAnswerIndex: 0,
-        keyPoints: '',
-        maxScore: null,
+        pairs: [
+          { left_item: '', right_item: '', is_correct: true, order: 1 },
+          { left_item: '', right_item: '', is_correct: true, order: 2 }
+        ],
         isTrue: true
       });
     }
@@ -477,8 +571,10 @@ const QuestionBank = () => {
       difficulty: 'easy',
       options: ['', '', '', ''],
       correctAnswerIndex: 0,
-      keyPoints: '',
-      maxScore: null,
+      pairs: [
+        { left_item: '', right_item: '', is_correct: true, order: 1 },
+        { left_item: '', right_item: '', is_correct: true, order: 2 }
+      ],
       isTrue: true
     });
   };
@@ -486,7 +582,7 @@ const QuestionBank = () => {
   const getModalTitle = () => {
     const typeNames = {
       multiple_choice: 'Multiple Choice',
-      essay: 'Essay',
+      matching: 'Menjodohkan',
       true_false: 'True/False'
     };
     return `${selectedQuestion ? 'Edit' : 'Tambah'} Soal ${typeNames[activeTab]}`;
@@ -494,7 +590,7 @@ const QuestionBank = () => {
 
   const tabs = [
     { id: 'multiple_choice', label: '🔤 Multiple Choice', icon: '🔤' },
-    { id: 'essay', label: '📝 Essay', icon: '📝' },
+    { id: 'matching', label: '� Menjodohkan', icon: '�' },
     { id: 'true_false', label: '✅ True/False', icon: '✅' }
   ];
 
@@ -517,7 +613,11 @@ const QuestionBank = () => {
               key={tab.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setDifficultyFilter(''); // Reset filter when switching tabs
+                resetPagination(); // Reset pagination when switching tabs
+              }}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
@@ -541,20 +641,117 @@ const QuestionBank = () => {
         </Card>
       ) : (
         <Card>
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <h3 className="text-xl font-semibold text-gray-900">
               {tabs.find(tab => tab.id === activeTab)?.label}
             </h3>
-            <Button onClick={() => handleOpenModal()}>
-              ➕ Tambah Soal
-            </Button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Filter Kesulitan:</span>
+                <Select
+                  value={difficultyFilter}
+                  onChange={(e) => {
+                    setDifficultyFilter(e.target.value);
+                    resetPagination(); // Reset to page 1 when filter changes
+                  }}
+                  disabled={loading}
+                  className="min-w-[180px]"
+                  placeholder="Semua Tingkat"
+                  options={[
+                    { value: '', label: 'Semua Tingkat' },
+                    { value: 'easy', label: '😊 Mudah' },
+                    { value: 'medium', label: '🤔 Sedang' },
+                    { value: 'hard', label: '😰 Sulit' }
+                  ]}
+                />
+              </div>
+              <Button onClick={() => handleOpenModal()}>
+                ➕ Tambah Soal
+              </Button>
+            </div>
           </div>
           
-          <Table 
-            columns={getCurrentColumns()}
-            data={getCurrentData()}
-            onRowClick={(question) => handleOpenModal(question)}
-          />
+          {/* Statistics */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 px-4 py-3 rounded-lg mb-6 gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
+              <span className="font-medium">📊 Total: {pagination.total} soal</span>
+              {questions.length > 0 && (
+                <>
+                  <span className="hidden sm:inline text-gray-400">|</span>
+                  <span className="text-gray-500">
+                    Menampilkan {pagination.from} - {pagination.to} dari {pagination.total}
+                  </span>
+                </>
+              )}
+            </div>
+            {difficultyFilter && (
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Filter: {difficultyFilter === 'easy' ? '😊 Mudah' : difficultyFilter === 'medium' ? '🤔 Sedang' : '😰 Sulit'}
+                </span>
+                <button
+                  onClick={() => {
+                    setDifficultyFilter('');
+                    resetPagination();
+                  }}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  Hapus
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {pagination.total === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📝</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {difficultyFilter 
+                  ? `Tidak ada soal ${difficultyFilter === 'easy' ? 'mudah' : difficultyFilter === 'medium' ? 'sedang' : 'sulit'} ditemukan`
+                  : 'Belum ada soal tersedia'
+                }
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {difficultyFilter 
+                  ? 'Coba ubah filter tingkat kesulitan atau tambah soal baru.'
+                  : `Mulai dengan menambahkan soal ${tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()}.`
+                }
+              </p>
+              <Button onClick={() => handleOpenModal()}>
+                ➕ Tambah Soal Pertama
+              </Button>
+            </div>
+          ) : (
+            <>
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-600 rounded-full mb-4" />
+                  <p className="text-gray-500">Memuat data soal...</p>
+                </div>
+              ) : (
+                <Table 
+                  columns={getCurrentColumns()}
+                  data={getCurrentData()}
+                  onRowClick={(question) => handleOpenModal(question)}
+                />
+              )}
+              
+              {/* Pagination */}
+              {pagination.total > 0 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={pagination.current_page}
+                    totalPages={pagination.last_page}
+                    onPageChange={handlePageChange}
+                    showingFrom={pagination.from}
+                    showingTo={pagination.to}
+                    totalItems={pagination.total}
+                    className={loading ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </Card>
       )}
 
@@ -631,50 +828,98 @@ const QuestionBank = () => {
           </div>
         )}
 
-        {/* Essay Form */}
-        {activeTab === 'essay' && (
+        {/* Matching Form */}
+        {activeTab === 'matching' && (
           <div className="space-y-6">
             <Input 
-              label="Pertanyaan Essay" 
-              placeholder="Masukkan pertanyaan essay"
+              label="Pertanyaan Menjodohkan" 
+              placeholder="Masukkan instruksi untuk soal menjodohkan"
               value={formData.prompt}
               onChange={(e) => setFormData({...formData, prompt: e.target.value})}
             />
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Kata Kunci Penting</label>
-              <textarea 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="4"
-                placeholder="Masukkan kata kunci penting yang harus ada dalam jawaban..."
-                value={formData.keyPoints}
-                onChange={(e) => setFormData({...formData, keyPoints: e.target.value})}
-              ></textarea>
-              <p className="text-sm text-gray-500 mt-1">💡 Kata kunci yang harus ada dalam jawaban siswa</p>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Pasangan yang Harus Dijodohkan</label>
+              <div className="space-y-3">
+                {formData.pairs.map((pair, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-3 items-center p-4 bg-gray-50 rounded-lg">
+                    <div className="col-span-5">
+                      <Input
+                        placeholder={`Item kiri ${index + 1}`}
+                        value={pair.left_item}
+                        onChange={(e) => {
+                          const newPairs = [...formData.pairs];
+                          newPairs[index].left_item = e.target.value;
+                          setFormData({...formData, pairs: newPairs});
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <span className="text-2xl">↔️</span>
+                    </div>
+                    <div className="col-span-5">
+                      <Input
+                        placeholder={`Item kanan ${index + 1}`}
+                        value={pair.right_item}
+                        onChange={(e) => {
+                          const newPairs = [...formData.pairs];
+                          newPairs[index].right_item = e.target.value;
+                          setFormData({...formData, pairs: newPairs});
+                        }}
+                      />
+                    </div>
+                    <div className="col-span-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.pairs.length > 2) {
+                            const newPairs = formData.pairs.filter((_, i) => i !== index);
+                            setFormData({...formData, pairs: newPairs});
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-800 disabled:text-gray-300"
+                        disabled={formData.pairs.length <= 2}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  if (formData.pairs.length < 10) {
+                    const newPairs = [...formData.pairs, {
+                      left_item: '',
+                      right_item: '',
+                      is_correct: true,
+                      order: formData.pairs.length + 1
+                    }];
+                    setFormData({...formData, pairs: newPairs});
+                  }
+                }}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                disabled={formData.pairs.length >= 10}
+              >
+                ➕ Tambah Pasangan
+              </button>
+              
+              <p className="text-sm text-gray-500 mt-2">💡 Buat minimal 2 pasangan, maksimal 10 pasangan</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Skor Maksimal</label>
-                <Input
-                  type="number"
-                  placeholder="Opsional (auto berdasarkan difficulty)"
-                  value={formData.maxScore || ''}
-                  onChange={(e) => setFormData({...formData, maxScore: e.target.value ? parseInt(e.target.value) : null})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Kesulitan</label>
-                <select 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
-                >
-                  <option value="easy">😊 Mudah (10 pts)</option>
-                  <option value="medium">🤔 Sedang (20 pts)</option>
-                  <option value="hard">😰 Sulit (30 pts)</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Kesulitan</label>
+              <select 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.difficulty}
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
+              >
+                <option value="easy">😊 Mudah (10 pts)</option>
+                <option value="medium">🤔 Sedang (20 pts)</option>
+                <option value="hard">😰 Sulit (30 pts)</option>
+              </select>
             </div>
           </div>
         )}
@@ -746,6 +991,7 @@ const QuestionBank = () => {
         )}
       </Modal>
       </div>
+      <toast.ToastContainer />
     </div>
   );
 };
