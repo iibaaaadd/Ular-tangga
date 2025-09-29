@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Material;
 use App\Models\Question;
 use App\Models\McqOption;
 use App\Models\TfStatement;
@@ -29,6 +30,12 @@ class QuestionSeeder extends Seeder
             ]);
         }
 
+        // Ambil semua materials untuk distribusi soal
+        $materials = Material::all();
+        if ($materials->isEmpty()) {
+            return; // Tidak ada material, skip seeding questions
+        }
+
         // MCQ Questions (15 soal)
         $mcqPrompts = [
             ['prompt' => 'Berapa hasil dari 2 + 2?', 'options' => ['3', '4', '5', '6'], 'correct' => 1, 'difficulty' => 'easy'],
@@ -48,8 +55,9 @@ class QuestionSeeder extends Seeder
             ['prompt' => 'Berapa hasil dari 2^8?', 'options' => ['128', '256', '512', '1024'], 'correct' => 1, 'difficulty' => 'hard'],
         ];
 
-        foreach ($mcqPrompts as $mcqData) {
+        foreach ($mcqPrompts as $index => $mcqData) {
             $mcqQuestion = Question::create([
+                'material_id' => $materials[$index % $materials->count()]->id,
                 'prompt' => $mcqData['prompt'],
                 'difficulty' => $mcqData['difficulty'],
                 'base_score' => $mcqData['difficulty'] === 'easy' ? 10 : ($mcqData['difficulty'] === 'medium' ? 20 : 30),
@@ -82,8 +90,9 @@ class QuestionSeeder extends Seeder
             ['prompt' => 'Teori relativitas dikemukakan oleh Newton.', 'answer' => false, 'difficulty' => 'hard'],
         ];
 
-        foreach ($tfPrompts as $tfData) {
+        foreach ($tfPrompts as $index => $tfData) {
             $tfQuestion = Question::create([
+                'material_id' => $materials[$index % $materials->count()]->id,
                 'prompt' => $tfData['prompt'],
                 'difficulty' => $tfData['difficulty'],
                 'base_score' => $tfData['difficulty'] === 'easy' ? 10 : ($tfData['difficulty'] === 'medium' ? 20 : 30),
@@ -244,8 +253,9 @@ class QuestionSeeder extends Seeder
             ]
         ];
 
-        foreach ($matchingPrompts as $matchingData) {
+        foreach ($matchingPrompts as $index => $matchingData) {
             $matchingQuestion = Question::create([
+                'material_id' => $materials[$index % $materials->count()]->id,
                 'prompt' => $matchingData['prompt'],
                 'difficulty' => $matchingData['difficulty'],
                 'base_score' => $matchingData['difficulty'] === 'easy' ? 10 : ($matchingData['difficulty'] === 'medium' ? 20 : 30),

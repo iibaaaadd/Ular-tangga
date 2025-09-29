@@ -37,6 +37,12 @@ class QuestionController extends Controller
                 $query->where('created_by', $request->created_by);
             }
 
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where('prompt', 'like', '%' . $search . '%');
+            }
+
             // Get pagination parameters
             $perPage = $request->get('per_page', 10);
             $page = $request->get('page', 1);

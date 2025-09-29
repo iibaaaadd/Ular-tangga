@@ -13,6 +13,7 @@ class Question extends Model
     use HasFactory;
 
     protected $fillable = [
+        'material_id',
         'prompt',
         'difficulty',
         'base_score',
@@ -28,6 +29,12 @@ class Question extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Relasi ke Material
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(Material::class);
     }
 
     // Relasi ke MCQ Options

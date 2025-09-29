@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\MaterialController;
 
 // Public routes (no authentication required)
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Question Management CRUD (for teachers and admins)
     Route::apiResource('questions', QuestionController::class);
+    
+    // Material Management CRUD (for teachers and admins)
+    Route::apiResource('materials', MaterialController::class);
+    Route::get('/materials-with-counts', [MaterialController::class, 'withQuestionCounts']);
     
     // Future game routes will go here
     // Route::get('/rooms', [RoomController::class, 'index']);

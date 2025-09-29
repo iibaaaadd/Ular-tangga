@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         // Run all seeders
         $this->call([
             UserSeeder::class,
+            MaterialSeeder::class,
             QuestionSeeder::class,
         ]);
     }
