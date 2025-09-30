@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
 {
@@ -45,11 +46,24 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'pdf_path' => 'nullable|string',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max
             'is_active' => 'boolean'
         ]);
 
-        $material = Material::create($validated);
+        // Handle file upload
+        $pdfPath = null;
+        if ($request->hasFile('pdf_file')) {
+            $file = $request->file('pdf_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $pdfPath = $file->storeAs('materials', $filename, 'public');
+        }
+
+        $material = Material::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'pdf_path' => $pdfPath,
+            'is_active' => $validated['is_active'] ?? true
+        ]);
 
         return response()->json([
             'message' => 'Material created successfully',
@@ -78,9 +92,21 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'pdf_path' => 'nullable|string',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max
             'is_active' => 'boolean'
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('pdf_file')) {
+            // Delete old file if exists
+            if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
+                Storage::disk('public')->delete($material->pdf_path);
+            }
+
+            $file = $request->file('pdf_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $validated['pdf_path'] = $file->storeAs('materials', $filename, 'public');
+        }
 
         $material->update($validated);
 
@@ -100,6 +126,11 @@ class MaterialController extends Controller
             return response()->json([
                 'message' => 'Cannot delete material that has questions. Please delete all questions first.'
             ], 422);
+        }
+
+        // Delete PDF file if exists
+        if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
+            Storage::disk('public')->delete($material->pdf_path);
         }
 
         $material->delete();

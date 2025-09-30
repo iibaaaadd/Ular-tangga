@@ -13,6 +13,7 @@ const AdminDashboard = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: 'chart' },
     { id: 'users', label: 'Users', icon: 'users' },
+    { id: 'materials', label: 'Materi', icon: 'book' },
     { id: 'questions', label: 'Bank Soal', icon: 'questions' },
     { id: 'analytics', label: 'Analytics', icon: 'analytics' }
   ];

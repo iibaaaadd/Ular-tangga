@@ -23,6 +23,11 @@ const Icon = ({ name, size = 20, className = '' }) => {
         <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"/>
       </svg>
     ),
+    book: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M18,22A2,2 0 0,0 20,20V4A2,2 0 0,0 18,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18M6,4H18V20H6V4M7,19H17V17H7V19M7,15H17V13H7V15M7,11H17V9H7V11M7,7H17V5H7V7Z"/>
+      </svg>
+    ),
     
     // Action Icons
     edit: (

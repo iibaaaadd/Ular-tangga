@@ -246,3 +246,66 @@ export const questionService = {
     return this.createQuestion(essayData);
   }
 };
+
+// Material API Services
+export const materialService = {
+  // Get all materials with pagination and search
+  async getMaterials(params = {}) {
+    try {
+      const response = await api.get('/materials', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get single material by ID
+  async getMaterial(id) {
+    try {
+      const response = await api.get(`/materials/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Create new material
+  async createMaterial(materialData) {
+    try {
+      const response = await api.post('/materials', materialData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Update material
+  async updateMaterial(id, materialData) {
+    try {
+      const response = await api.put(`/materials/${id}`, materialData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Delete material
+  async deleteMaterial(id) {
+    try {
+      const response = await api.delete(`/materials/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get materials with question counts
+  async getMaterialsWithCounts() {
+    try {
+      const response = await api.get('/materials-with-counts');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+};
