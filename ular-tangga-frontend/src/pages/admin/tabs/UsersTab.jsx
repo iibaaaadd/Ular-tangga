@@ -5,7 +5,7 @@ import { Card, Button, Modal, Input, Table, Pagination, Select, useToast, useCon
 import { userService } from '../../../services/api';
 
 const UsersTab = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -293,8 +293,12 @@ const UsersTab = () => {
         </div>
         
         {loading && (
-          <div className="text-center py-4">
-            <p className="text-gray-600">⏳ Memuat data...</p>
+          <div className="text-center py-12">
+            <svg className="animate-spin inline-block w-8 h-8 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-gray-500">Memuat data users...</p>
           </div>
         )}
         
@@ -310,21 +314,25 @@ const UsersTab = () => {
           </div>
         )}
         
-        <Table 
-          columns={userColumns}
-          data={users}
-        />
+        {!loading && (
+          <>
+            <Table 
+              columns={userColumns}
+              data={users}
+            />
 
-        {pagination.last_page > 1 && (
-          <Pagination
-            currentPage={pagination.current_page}
-            totalPages={pagination.last_page}
-            onPageChange={handlePageChange}
-            showingFrom={pagination.from}
-            showingTo={pagination.to}
-            totalItems={pagination.total}
-            className="mt-4"
-          />
+            {pagination.last_page > 1 && (
+              <Pagination
+                currentPage={pagination.current_page}
+                totalPages={pagination.last_page}
+                onPageChange={handlePageChange}
+                showingFrom={pagination.from}
+                showingTo={pagination.to}
+                totalItems={pagination.total}
+                className="mt-4"
+              />
+            )}
+          </>
         )}
       </Card>
 

@@ -883,19 +883,17 @@ const QuestionBank = () => {
               <p className="text-sm text-gray-500 mt-2">💡 Pilih radio button untuk menandai jawaban yang benar</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Kesulitan</label>
-                <select 
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
-                >
-                  <option value="easy">😊 Mudah (10 pts)</option>
-                  <option value="medium">🤔 Sedang (20 pts)</option>
-                  <option value="hard">😰 Sulit (30 pts)</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Kesulitan</label>
+              <select 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={formData.difficulty}
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value})}
+              >
+                <option value="easy">😊 Mudah (10 pts)</option>
+                <option value="medium">🤔 Sedang (20 pts)</option>
+                <option value="hard">😰 Sulit (30 pts)</option>
+              </select>
             </div>
           </div>
         )}

@@ -119,6 +119,19 @@ const Icon = ({ name, size = 20, className = '' }) => {
       </svg>
     ),
     
+    // File Icons
+    document: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z"/>
+      </svg>
+    ),
+    pdf: (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+        <text x="12" y="16" fontSize="6" textAnchor="middle" fill="currentColor" fontFamily="Arial, sans-serif" fontWeight="bold">PDF</text>
+      </svg>
+    ),
+    
     // Close Icon
     close: (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>

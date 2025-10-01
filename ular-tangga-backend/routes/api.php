@@ -16,10 +16,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    // Admin-only routes
     Route::post('/admin/create-user', [AuthController::class, 'createUser']);
     
-    // Admin User Management CRUD
     Route::prefix('admin/users')->group(function () {
         Route::get('/', [UserController::class, 'index']); // GET all users
         Route::post('/', [UserController::class, 'store']); // CREATE user
@@ -28,10 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [UserController::class, 'destroy']); // DELETE user
     });
     
-    // Question Management CRUD (for teachers and admins)
     Route::apiResource('questions', QuestionController::class);
-    
-    // Material Management CRUD (for teachers and admins)
+
     Route::apiResource('materials', MaterialController::class);
     Route::get('/materials-with-counts', [MaterialController::class, 'withQuestionCounts']);
     

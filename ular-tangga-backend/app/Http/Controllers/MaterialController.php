@@ -6,6 +6,7 @@ use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MaterialController extends Controller
 {
@@ -89,26 +90,72 @@ class MaterialController extends Controller
      */
     public function update(Request $request, Material $material): JsonResponse
     {
+        Log::info('Update request received', [
+            'method' => $request->method(),
+            'id' => $material->id,
+            'all_data' => $request->all(),
+            'files' => $request->allFiles(),
+            'headers' => $request->headers->all(),
+        ]);
+        
+        // Validate input
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max
-            'is_active' => 'boolean'
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240',
+            'is_active' => 'sometimes'
         ]);
+        
+        Log::info('Validation passed', ['validated' => $validated]);
+        
+        // Handle is_active conversion
+        if ($request->has('is_active')) {
+            $isActiveValue = $request->get('is_active');
+            $validated['is_active'] = in_array($isActiveValue, ['1', 1, true, 'true'], true);
+            Log::info('is_active processed', [
+                'original' => $isActiveValue,
+                'converted' => $validated['is_active']
+            ]);
+        }
 
         // Handle file upload
         if ($request->hasFile('pdf_file')) {
+            Log::info('Processing file upload');
+            
             // Delete old file if exists
             if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
                 Storage::disk('public')->delete($material->pdf_path);
+                Log::info('Old file deleted', ['path' => $material->pdf_path]);
             }
 
             $file = $request->file('pdf_file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $validated['pdf_path'] = $file->storeAs('materials', $filename, 'public');
+            
+            Log::info('New file uploaded', ['path' => $validated['pdf_path']]);
+        } else {
+            // Keep existing PDF path if no new file uploaded
+            if ($material->pdf_path) {
+                $validated['pdf_path'] = $material->pdf_path;
+                Log::info('Keeping existing file', ['path' => $material->pdf_path]);
+            }
         }
 
-        $material->update($validated);
+        Log::info('Before update', [
+            'material_before' => $material->toArray(),
+            'data_to_update' => $validated
+        ]);
+
+        // Update the material
+        $updated = $material->update($validated);
+        
+        // Refresh to get latest data
+        $material->refresh();
+        
+        Log::info('After update', [
+            'update_result' => $updated,
+            'material_after' => $material->toArray()
+        ]);
 
         return response()->json([
             'message' => 'Material updated successfully',
@@ -121,23 +168,35 @@ class MaterialController extends Controller
      */
     public function destroy(Material $material): JsonResponse
     {
-        // Check if material has questions
-        if ($material->questions()->count() > 0) {
+        try {
+            // Get the count of related questions for logging
+            $questionCount = $material->questions()->count();
+            
+            // Delete PDF file if exists
+            if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
+                Storage::disk('public')->delete($material->pdf_path);
+            }
+
+            // Delete material (cascade will automatically delete related questions)
+            $material->delete();
+
+            $message = $questionCount > 0 
+                ? "Material and {$questionCount} related questions deleted successfully"
+                : 'Material deleted successfully';
+
             return response()->json([
-                'message' => 'Cannot delete material that has questions. Please delete all questions first.'
-            ], 422);
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting material', [
+                'material_id' => $material->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message' => 'Error occurred while deleting material'
+            ], 500);
         }
-
-        // Delete PDF file if exists
-        if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
-            Storage::disk('public')->delete($material->pdf_path);
-        }
-
-        $material->delete();
-
-        return response()->json([
-            'message' => 'Material deleted successfully'
-        ]);
     }
 
     /**

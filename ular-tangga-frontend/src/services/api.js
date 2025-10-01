@@ -17,12 +17,19 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth_token');
+    console.log('API Request interceptor - Token found:', token ? 'Yes' : 'No');
+    console.log('API Request to:', config.baseURL + config.url);
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No auth token found in localStorage');
     }
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -252,9 +259,12 @@ export const materialService = {
   // Get all materials with pagination and search
   async getMaterials(params = {}) {
     try {
+      console.log('MaterialService: Making request to /materials with params:', params);
       const response = await api.get('/materials', { params });
+      console.log('MaterialService: Raw response:', response);
       return response.data;
     } catch (error) {
+      console.error('MaterialService: Error getting materials:', error);
       throw error.response?.data || error;
     }
   },
@@ -272,7 +282,16 @@ export const materialService = {
   // Create new material
   async createMaterial(materialData) {
     try {
-      const response = await api.post('/materials', materialData);
+      // If materialData is FormData, remove Content-Type to let browser set it
+      const config = {};
+      if (materialData instanceof FormData) {
+        config.transformRequest = [(data, headers) => {
+          delete headers['Content-Type'];
+          return data;
+        }];
+      }
+      
+      const response = await api.post('/materials', materialData, config);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -282,7 +301,26 @@ export const materialService = {
   // Update material
   async updateMaterial(id, materialData) {
     try {
-      const response = await api.put(`/materials/${id}`, materialData);
+      // If materialData is FormData, use POST with _method=PUT for Laravel
+      const config = {};
+      let endpoint = `/materials/${id}`;
+      let method = 'put';
+      
+      if (materialData instanceof FormData) {
+        // For FormData, use POST with _method field for Laravel compatibility
+        method = 'post';
+        config.transformRequest = [(data, headers) => {
+          delete headers['Content-Type'];
+          return data;
+        }];
+      }
+      
+      console.log('MaterialService: Updating with method:', method, 'endpoint:', endpoint);
+      
+      const response = method === 'post' 
+        ? await api.post(endpoint, materialData, config)
+        : await api.put(endpoint, materialData, config);
+        
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
