@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Card, Button } from '../../../components/ui';
 
-const OverviewTab = ({ setActiveTab, setIsModalOpen, setModalType, rooms = [], recentGames = [] }) => {
+const OverviewTab = ({ setActiveTab, rooms = [], recentGames = [] }) => {
   const activeRooms = rooms.filter(room => room.status === 'active').length;
   const totalStudents = rooms.reduce((sum, room) => sum + room.students, 0);
   const totalGames = recentGames.length;
@@ -44,16 +44,16 @@ const OverviewTab = ({ setActiveTab, setIsModalOpen, setModalType, rooms = [], r
           <div className="space-y-3">
             <Button 
               className="w-full justify-start" 
-              onClick={() => {setModalType('room'); setIsModalOpen(true);}}
+              onClick={() => setActiveTab('rooms')}
             >
               ➕ Buat Kelas Baru
             </Button>
             <Button 
               className="w-full justify-start" 
               variant="outline"
-              onClick={() => {setModalType('question'); setIsModalOpen(true);}}
+              onClick={() => setActiveTab('rooms')}
             >
-              📝 Tambah Soal
+              🏫 Kelola Kelas
             </Button>
             <Button 
               className="w-full justify-start" 

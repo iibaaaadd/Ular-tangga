@@ -13,11 +13,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Run all seeders
+        // Run all seeders in correct order
         $this->call([
             UserSeeder::class,
             MaterialSeeder::class,
             QuestionSeeder::class,
+            GameRoomSeeder::class,
+            RoomParticipantSeeder::class,
+            GameSessionSeeder::class,
+            StudentAnswerSeeder::class,
         ]);
     }
 }

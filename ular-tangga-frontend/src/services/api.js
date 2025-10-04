@@ -347,3 +347,109 @@ export const materialService = {
     }
   }
 };
+
+// Game Room API
+export const gameRoomService = {
+  // Get teacher's rooms
+  async getTeacherRooms() {
+    try {
+      const response = await api.get('/game-rooms');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Create new room
+  async createRoom(roomData) {
+    try {
+      const response = await api.post('/game-rooms', roomData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get room details
+  async getRoomDetails(roomCode) {
+    try {
+      const response = await api.get(`/game-rooms/${roomCode}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Join room (for students)
+  async joinRoom(roomCode) {
+    try {
+      const response = await api.post('/game-rooms/join', { room_code: roomCode });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Start studying phase
+  async startStudying(roomCode) {
+    try {
+      const response = await api.post(`/game-rooms/${roomCode}/start-studying`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Start game
+  async startGame(roomCode) {
+    try {
+      const response = await api.post(`/game-rooms/${roomCode}/start-game`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get leaderboard
+  async getLeaderboard(roomCode) {
+    try {
+      const response = await api.get(`/game-rooms/${roomCode}/leaderboard`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+};
+
+// Game Session API
+export const gameSessionService = {
+  // Get current question
+  async getCurrentQuestion(roomCode) {
+    try {
+      const response = await api.get(`/game-sessions/room/${roomCode}/current-question`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Start next question (teacher)
+  async startNextQuestion(roomCode) {
+    try {
+      const response = await api.post(`/game-sessions/room/${roomCode}/next-question`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Submit answer (student)
+  async submitAnswer(sessionId, answerData) {
+    try {
+      const response = await api.post(`/game-sessions/${sessionId}/submit-answer`, answerData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+};

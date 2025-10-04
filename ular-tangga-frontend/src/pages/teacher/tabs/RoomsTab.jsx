@@ -1,45 +1,217 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Card, Button, Table } from '../../../components/ui';
+import { Card, Button, Table, Modal, Input, Select } from '../../../components/ui';
+import { gameRoomService, materialService } from '../../../services/api';
 
-const RoomsTab = ({ rooms = [], setIsModalOpen, setModalType }) => {
+const RoomsTab = ({ setIsModalOpen, setModalType }) => {
+  const [rooms, setRooms] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [formData, setFormData] = useState({
+    room_name: '',
+    material_id: '',
+    max_participants: 30
+  });
+
+  useEffect(() => {
+    fetchRooms();
+    fetchMaterials();
+  }, []);
+
+  useEffect(() => {
+    console.log('Materials state changed:', materials);
+    console.log('Materials count:', materials.length);
+  }, [materials]);
+
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const response = await gameRoomService.getTeacherRooms();
+      if (response.status === 'success') {
+        setRooms(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMaterials = async () => {
+    try {
+      console.log('Fetching materials...');
+      const response = await materialService.getMaterials();
+      console.log('Materials response full:', response);
+      console.log('Response structure:', {
+        status: response.status,
+        data: response.data,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data)
+      });
+      
+      // Check different possible response formats
+      if (response && response.data) {
+        console.log('Setting materials from response.data:', response.data);
+        setMaterials(response.data);
+      } else if (response && Array.isArray(response)) {
+        console.log('Setting materials from direct response:', response);
+        setMaterials(response);
+      } else {
+        console.error('Unexpected response format:', response);
+        setMaterials([]); // Set empty array as fallback
+      }
+    } catch (error) {
+      console.error('Error fetching materials:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status
+      });
+      setMaterials([]); // Set empty array on error
+    }
+  };
+
+  const handleCreateRoom = async () => {
+    try {
+      const response = await gameRoomService.createRoom(formData);
+      if (response.status === 'success') {
+        setIsCreateModalOpen(false);
+        setFormData({ room_name: '', material_id: '', max_participants: 30 });
+        fetchRooms(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      alert('Gagal membuat kelas. Silahkan coba lagi.');
+    }
+  };
+
+  const handleStartStudying = async (roomCode) => {
+    try {
+      const response = await gameRoomService.startStudying(roomCode);
+      if (response.status === 'success') {
+        fetchRooms(); // Refresh data
+        alert('Fase belajar dimulai!');
+      }
+    } catch (error) {
+      console.error('Error starting study phase:', error);
+      alert('Gagal memulai fase belajar.');
+    }
+  };
+
+  const handleStartGame = async (roomCode) => {
+    try {
+      const response = await gameRoomService.startGame(roomCode);
+      if (response.status === 'success') {
+        fetchRooms(); // Refresh data
+        alert('Game dimulai!');
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
+      alert('Gagal memulai game.');
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      waiting: { color: 'yellow', text: '⏳ Menunggu', bgColor: 'bg-yellow-100 text-yellow-800' },
+      studying: { color: 'blue', text: '📚 Belajar', bgColor: 'bg-blue-100 text-blue-800' },
+      playing: { color: 'green', text: '🎮 Bermain', bgColor: 'bg-green-100 text-green-800' },
+      finished: { color: 'gray', text: '✅ Selesai', bgColor: 'bg-gray-100 text-gray-800' }
+    };
+    
+    const config = statusConfig[status] || statusConfig.waiting;
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bgColor}`}>
+        {config.text}
+      </span>
+    );
+  };
+
   const roomColumns = [
-    { key: 'name', header: 'Nama Kelas' },
-    { key: 'code', header: 'Kode' },
     { 
-      key: 'students', 
-      header: 'Siswa',
-      render: (students) => (
-        <span className="font-semibold text-blue-600">{students} siswa</span>
+      key: 'room_name', 
+      header: 'Nama Kelas',
+      render: (name, room) => (
+        <div>
+          <div className="font-semibold text-gray-900">{name}</div>
+          <div className="text-sm text-gray-500">Kode: {room.room_code}</div>
+        </div>
       )
     },
-    { key: 'gameType', header: 'Tipe Game' },
+    { 
+      key: 'material', 
+      header: 'Materi',
+      render: (material) => (
+        <div className="text-sm">
+          <div className="font-medium">{material?.title}</div>
+          <div className="text-gray-500">{material?.description}</div>
+        </div>
+      )
+    },
+    { 
+      key: 'participants', 
+      header: 'Peserta',
+      render: (participants, room) => (
+        <span className="font-semibold text-blue-600">
+          {participants?.length || 0}/{room.max_participants}
+        </span>
+      )
+    },
     { 
       key: 'status', 
       header: 'Status',
-      render: (status) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {status === 'active' ? '✅ Aktif' : '❌ Non-aktif'}
-        </span>
-      )
+      render: (status) => getStatusBadge(status)
     },
     {
       key: 'actions',
       header: 'Aksi',
       render: (_, room) => (
         <div className="flex space-x-2">
-          <Button size="small" variant="outline">
-            ✏️ Edit
-          </Button>
-          <Button size="small" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
-            🗑️ Hapus
+          {room.status === 'waiting' && (
+            <Button 
+              size="small" 
+              variant="outline"
+              onClick={() => handleStartStudying(room.room_code)}
+            >
+              📚 Mulai Belajar
+            </Button>
+          )}
+          {room.status === 'studying' && (
+            <Button 
+              size="small" 
+              variant="primary"
+              onClick={() => handleStartGame(room.room_code)}
+            >
+              🎮 Mulai Game
+            </Button>
+          )}
+          <Button 
+            size="small" 
+            variant="outline"
+            onClick={() => setSelectedRoom(room)}
+          >
+            �️ Detail
           </Button>
         </div>
       )
     }
   ];
+
+  if (loading) {
+    return (
+      <motion.div
+        key="rooms-loading"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex justify-center items-center py-12"
+      >
+        <div className="text-xl">Loading...</div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -50,7 +222,10 @@ const RoomsTab = ({ rooms = [], setIsModalOpen, setModalType }) => {
       <Card>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">🏫 Manajemen Kelas</h2>
-          <Button onClick={() => {setModalType('room'); setIsModalOpen(true);}}>
+          <Button onClick={() => {
+            console.log('Opening create modal, materials state:', materials);
+            setIsCreateModalOpen(true);
+          }}>
             ➕ Buat Kelas Baru
           </Button>
         </div>
@@ -65,7 +240,7 @@ const RoomsTab = ({ rooms = [], setIsModalOpen, setModalType }) => {
             <div className="text-6xl mb-4">🏫</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Belum ada kelas</h3>
             <p className="text-gray-500 mb-6">Buat kelas pertama Anda untuk mulai mengajar!</p>
-            <Button onClick={() => {setModalType('room'); setIsModalOpen(true);}}>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
               ➕ Buat Kelas Pertama
             </Button>
           </div>
@@ -73,31 +248,145 @@ const RoomsTab = ({ rooms = [], setIsModalOpen, setModalType }) => {
 
         {/* Room Statistics */}
         {rooms.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="text-center" hoverable={false}>
-              <div className="text-2xl mb-2">🟢</div>
+              <div className="text-2xl mb-2">�</div>
+              <h4 className="text-lg font-bold text-gray-900">{rooms.length}</h4>
+              <p className="text-gray-600">Total Kelas</p>
+            </Card>
+            <Card className="text-center" hoverable={false}>
+              <div className="text-2xl mb-2">⏳</div>
               <h4 className="text-lg font-bold text-gray-900">
-                {rooms.filter(r => r.status === 'active').length}
+                {rooms.filter(r => r.status === 'waiting').length}
               </h4>
-              <p className="text-gray-600">Kelas Aktif</p>
+              <p className="text-gray-600">Menunggu</p>
+            </Card>
+            <Card className="text-center" hoverable={false}>
+              <div className="text-2xl mb-2">🎮</div>
+              <h4 className="text-lg font-bold text-gray-900">
+                {rooms.filter(r => r.status === 'playing').length}
+              </h4>
+              <p className="text-gray-600">Sedang Main</p>
             </Card>
             <Card className="text-center" hoverable={false}>
               <div className="text-2xl mb-2">👥</div>
               <h4 className="text-lg font-bold text-gray-900">
-                {rooms.reduce((sum, room) => sum + room.students, 0)}
+                {rooms.reduce((sum, room) => sum + (room.participants?.length || 0), 0)}
               </h4>
-              <p className="text-gray-600">Total Siswa</p>
-            </Card>
-            <Card className="text-center" hoverable={false}>
-              <div className="text-2xl mb-2">📊</div>
-              <h4 className="text-lg font-bold text-gray-900">
-                {Math.round(rooms.reduce((sum, room) => sum + room.students, 0) / rooms.length)}
-              </h4>
-              <p className="text-gray-600">Rata-rata per Kelas</p>
+              <p className="text-gray-600">Total Peserta</p>
             </Card>
           </div>
         )}
       </Card>
+
+      {/* Create Room Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Buat Kelas Baru"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsCreateModalOpen(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleCreateRoom}>
+              Buat Kelas
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input 
+            label="Nama Kelas" 
+            placeholder="Contoh: Kelas 7A - Matematika"
+            value={formData.room_name}
+            onChange={(e) => setFormData(prev => ({ ...prev, room_name: e.target.value }))}
+          />
+          <Select
+            label="Pilih Materi"
+            value={formData.material_id}
+            onChange={(e) => {
+              console.log('Material selected:', e.target.value);
+              setFormData(prev => ({ ...prev, material_id: e.target.value }));
+            }}
+            options={(() => {
+              console.log('Creating options, materials state:', materials);
+              console.log('Materials length:', materials.length);
+              const options = [
+                { value: '', label: 'Pilih materi...' },
+                ...materials.map(material => {
+                  console.log('Mapping material:', material);
+                  return {
+                    value: material.id,
+                    label: material.title
+                  };
+                })
+              ];
+              console.log('Final options:', options);
+              return options;
+            })()}
+          />
+          <Input 
+            label="Maksimal Peserta" 
+            type="number"
+            placeholder="30"
+            min="2"
+            max="100"
+            value={formData.max_participants}
+            onChange={(e) => setFormData(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 30 }))}
+          />
+        </div>
+      </Modal>
+
+      {/* Room Detail Modal */}
+      {selectedRoom && (
+        <Modal
+          isOpen={!!selectedRoom}
+          onClose={() => setSelectedRoom(null)}
+          title={`Detail Kelas: ${selectedRoom.room_name}`}
+          footer={
+            <Button variant="secondary" onClick={() => setSelectedRoom(null)}>
+              Tutup
+            </Button>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-gray-700">Kode Kelas:</h4>
+              <p className="text-lg font-mono bg-gray-100 p-2 rounded">{selectedRoom.room_code}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Materi:</h4>
+              <p>{selectedRoom.material?.title}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Status:</h4>
+              {getStatusBadge(selectedRoom.status)}
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Peserta:</h4>
+              <p>{selectedRoom.participants?.length || 0} dari {selectedRoom.max_participants} orang</p>
+            </div>
+            {selectedRoom.participants && selectedRoom.participants.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Daftar Peserta:</h4>
+                <div className="max-h-40 overflow-y-auto">
+                  {selectedRoom.participants.map((participant, index) => (
+                    <div key={index} className="flex justify-between items-center py-1">
+                      <span>{participant.student?.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        participant.is_ready ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {participant.is_ready ? 'Siap' : 'Belum Siap'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </motion.div>
   );
 };

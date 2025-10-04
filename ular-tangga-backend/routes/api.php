@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\GameRoomController;
+use App\Http\Controllers\GameSessionController;
 
 // Public routes (no authentication required)
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,8 +33,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('materials', MaterialController::class);
     Route::get('/materials-with-counts', [MaterialController::class, 'withQuestionCounts']);
     
-    // Future game routes will go here
-    // Route::get('/rooms', [RoomController::class, 'index']);
-    // Route::post('/rooms', [RoomController::class, 'store']);
-    // Route::get('/games/{game}', [GameController::class, 'show']);
+    // Game Room Routes
+    Route::prefix('game-rooms')->group(function () {
+        Route::get('/', [GameRoomController::class, 'index']); // Get teacher's rooms
+        Route::post('/', [GameRoomController::class, 'store']); // Create new room
+        Route::get('/{roomCode}', [GameRoomController::class, 'show']); // Get room details
+        Route::post('/join', [GameRoomController::class, 'joinRoom']); // Join room (students)
+        Route::post('/{roomCode}/start-studying', [GameRoomController::class, 'startStudying']); // Start study phase
+        Route::post('/{roomCode}/start-game', [GameRoomController::class, 'startGame']); // Start game
+        Route::get('/{roomCode}/leaderboard', [GameRoomController::class, 'getLeaderboard']); // Get leaderboard
+    });
+    
+    // Game Session Routes
+    Route::prefix('game-sessions')->group(function () {
+        Route::get('/room/{roomCode}/current-question', [GameSessionController::class, 'getCurrentQuestion']); // Get current question
+        Route::post('/room/{roomCode}/next-question', [GameSessionController::class, 'startNextQuestion']); // Start next question (teacher)
+        Route::post('/{sessionId}/submit-answer', [GameSessionController::class, 'submitAnswer']); // Submit answer (student)
+    });
 });

@@ -31,12 +31,21 @@ class MaterialController extends Controller
             });
         }
 
-        // Pagination
-        $perPage = $request->get('per_page', 10);
-        $materials = $query->orderBy('created_at', 'desc')
-                          ->paginate($perPage);
-
-        return response()->json($materials);
+        // Check if pagination is requested
+        if ($request->has('paginate') && $request->boolean('paginate')) {
+            // Pagination
+            $perPage = $request->get('per_page', 10);
+            $materials = $query->orderBy('created_at', 'desc')
+                              ->paginate($perPage);
+            return response()->json($materials);
+        } else {
+            // Return all materials without pagination
+            $materials = $query->orderBy('created_at', 'desc')->get();
+            return response()->json([
+                'status' => 'success',
+                'data' => $materials
+            ]);
+        }
     }
 
     /**
