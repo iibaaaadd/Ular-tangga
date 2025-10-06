@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('material_id')->nullable()->constrained('materials')->onDelete('cascade');
+            $table->foreignId('material_id')->constrained('materials')->onDelete('cascade');
             $table->text('prompt');
             $table->enum('difficulty', ['easy', 'medium', 'hard']);
             $table->decimal('base_score', 6, 2)->default(10);

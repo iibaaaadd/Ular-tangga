@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     Route::apiResource('questions', QuestionController::class);
+    Route::get('/materials/{materialId}/questions', [QuestionController::class, 'getByMaterial']);
 
     Route::apiResource('materials', MaterialController::class);
     Route::get('/materials-with-counts', [MaterialController::class, 'withQuestionCounts']);

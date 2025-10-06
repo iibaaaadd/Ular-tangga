@@ -20,7 +20,12 @@ class QuestionController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Question::with(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
+            $query = Question::with(['material', 'creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
+
+            // Filter by material if provided
+            if ($request->has('material_id')) {
+                $query->where('material_id', $request->material_id);
+            }
 
             // Filter by subtype if provided
             if ($request->has('subtype')) {
@@ -79,6 +84,7 @@ class QuestionController extends Controller
         try {
             // Validation rules
             $rules = [
+                'material_id' => 'required|exists:materials,id',
                 'prompt' => 'required|string|max:1000',
                 'difficulty' => 'required|in:easy,medium,hard',
                 'subtype' => 'required|in:mcq,true_false,matching'
@@ -113,6 +119,7 @@ class QuestionController extends Controller
 
             // Create the question
             $question = Question::create([
+                'material_id' => $validated['material_id'],
                 'prompt' => $validated['prompt'],
                 'difficulty' => $validated['difficulty'],
                 'base_score' => $baseScore,
@@ -156,7 +163,7 @@ class QuestionController extends Controller
             DB::commit();
 
             // Load relationships for response
-            $question->load(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
+            $question->load(['material', 'creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
 
             return response()->json([
                 'success' => true,
@@ -186,7 +193,7 @@ class QuestionController extends Controller
     public function show(string $id): JsonResponse
     {
         try {
-            $question = Question::with(['creator', 'mcqOptions', 'tfStatement', 'matchingPairs'])
+            $question = Question::with(['material', 'creator', 'mcqOptions', 'tfStatement', 'matchingPairs'])
                               ->findOrFail($id);
 
             return response()->json([
@@ -345,6 +352,59 @@ class QuestionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete question: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get questions by material ID
+     */
+    public function getByMaterial(Request $request, $materialId): JsonResponse
+    {
+        try {
+            $query = Question::with(['material', 'creator', 'mcqOptions', 'tfStatement', 'matchingPairs'])
+                           ->where('material_id', $materialId);
+
+            // Filter by subtype if provided
+            if ($request->has('subtype')) {
+                $query->where('subtype', $request->subtype);
+            }
+
+            // Filter by difficulty if provided  
+            if ($request->has('difficulty')) {
+                $query->where('difficulty', $request->difficulty);
+            }
+
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where('prompt', 'like', '%' . $search . '%');
+            }
+
+            // Get pagination parameters
+            $perPage = $request->get('per_page', 10);
+            $page = $request->get('page', 1);
+
+            // Apply pagination
+            $questions = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'success' => true,
+                'data' => $questions->items(),
+                'meta' => [
+                    'current_page' => $questions->currentPage(),
+                    'per_page' => $questions->perPage(),
+                    'total' => $questions->total(),
+                    'last_page' => $questions->lastPage(),
+                    'from' => $questions->firstItem(),
+                    'to' => $questions->lastItem(),
+                    'has_more_pages' => $questions->hasMorePages()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch questions: ' . $e->getMessage()
             ], 500);
         }
     }

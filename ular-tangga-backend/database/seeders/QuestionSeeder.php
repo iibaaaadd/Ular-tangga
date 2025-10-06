@@ -36,23 +36,23 @@ class QuestionSeeder extends Seeder
             return; // Tidak ada material, skip seeding questions
         }
 
-        // MCQ Questions (15 soal)
+        // MCQ Questions (15 soal tentang bahasa Jawa)
         $mcqPrompts = [
-            ['prompt' => 'Berapa hasil dari 2 + 2?', 'options' => ['3', '4', '5', '6'], 'correct' => 1, 'difficulty' => 'easy'],
-            ['prompt' => 'Siapa presiden pertama Indonesia?', 'options' => ['Soekarno', 'Soeharto', 'Habibie', 'Megawati'], 'correct' => 0, 'difficulty' => 'easy'],
-            ['prompt' => 'Berapa hasil dari 5 × 6?', 'options' => ['25', '30', '35', '40'], 'correct' => 1, 'difficulty' => 'easy'],
-            ['prompt' => 'Apa ibukota Jepang?', 'options' => ['Osaka', 'Kyoto', 'Tokyo', 'Hiroshima'], 'correct' => 2, 'difficulty' => 'easy'],
-            ['prompt' => 'Berapa hasil dari 144 ÷ 12?', 'options' => ['11', '12', '13', '14'], 'correct' => 1, 'difficulty' => 'medium'],
-            ['prompt' => 'Siapa penemu telepon?', 'options' => ['Thomas Edison', 'Alexander Graham Bell', 'Nikola Tesla', 'Benjamin Franklin'], 'correct' => 1, 'difficulty' => 'medium'],
-            ['prompt' => 'Berapa akar kuadrat dari 81?', 'options' => ['7', '8', '9', '10'], 'correct' => 2, 'difficulty' => 'medium'],
-            ['prompt' => 'Dalam sistem periodik, apa simbol untuk emas?', 'options' => ['Go', 'Gd', 'Au', 'Ag'], 'correct' => 2, 'difficulty' => 'medium'],
-            ['prompt' => 'Berapa hasil dari sin(90°)?', 'options' => ['0', '0.5', '0.707', '1'], 'correct' => 3, 'difficulty' => 'hard'],
-            ['prompt' => 'Siapa yang menulis novel "Laskar Pelangi"?', 'options' => ['Andrea Hirata', 'Pramoedya', 'Tere Liye', 'Dee Lestari'], 'correct' => 0, 'difficulty' => 'medium'],
-            ['prompt' => 'Berapa nilai π (pi) hingga 2 desimal?', 'options' => ['3.14', '3.15', '3.16', '3.17'], 'correct' => 0, 'difficulty' => 'easy'],
-            ['prompt' => 'Apa nama satelit alami Bumi?', 'options' => ['Mars', 'Venus', 'Bulan', 'Jupiter'], 'correct' => 2, 'difficulty' => 'easy'],
-            ['prompt' => 'Berapa jumlah provinsi di Indonesia?', 'options' => ['32', '33', '34', '35'], 'correct' => 2, 'difficulty' => 'medium'],
-            ['prompt' => 'Siapa bapak fisika modern?', 'options' => ['Newton', 'Einstein', 'Galileo', 'Planck'], 'correct' => 1, 'difficulty' => 'hard'],
-            ['prompt' => 'Berapa hasil dari 2^8?', 'options' => ['128', '256', '512', '1024'], 'correct' => 1, 'difficulty' => 'hard'],
+            ['prompt' => 'Apa jeneng aksara Jawa sing kapisan?', 'options' => ['Na', 'Ha', 'Ca', 'Ra'], 'correct' => 1, 'difficulty' => 'easy'],
+            ['prompt' => 'Tembung "nandur" ing basa krama yaiku?', 'options' => ['nanem', 'tandur', 'tetanem', 'nandur'], 'correct' => 2, 'difficulty' => 'medium'],
+            ['prompt' => 'Aksara Jawa gunane kanggo nulis basa apa?', 'options' => ['Indonesia', 'Inggris', 'Jawa', 'Arab'], 'correct' => 2, 'difficulty' => 'easy'],
+            ['prompt' => 'Apa wujude unggah-ungguh basa sing paling alus?', 'options' => ['Ngoko', 'Madya', 'Krama', 'Krama Inggil'], 'correct' => 3, 'difficulty' => 'medium'],
+            ['prompt' => 'Tembung "sare" artine apa?', 'options' => ['mangan', 'turu', 'adus', 'mlaku'], 'correct' => 1, 'difficulty' => 'easy'],
+            ['prompt' => 'Sandhangan sing dipasang ing ngisor aksara yaiku?', 'options' => ['Wulu', 'Suku', 'Pepet', 'Taling'], 'correct' => 1, 'difficulty' => 'medium'],
+            ['prompt' => 'Geguritan yaiku karya sastra awujud?', 'options' => ['Prosa', 'Puisi', 'Drama', 'Cerkak'], 'correct' => 1, 'difficulty' => 'easy'],
+            ['prompt' => 'Aksara murda digunakake kanggo nulis?', 'options' => ['jeneng wong', 'jeneng papan', 'jeneng dina', 'kabeh bener'], 'correct' => 3, 'difficulty' => 'hard'],
+            ['prompt' => 'Tembang macapat sing kasebut "Pocung" nduweni guru lagu?', 'options' => ['12u, 6a, 8i, 12a', '7u, 9i, 7a, 7i', '8u, 11i, 8u, 7a', '10u, 10a, 8i, 7a'], 'correct' => 0, 'difficulty' => 'hard'],
+            ['prompt' => 'Basa krama alus kanggo "aku" yaiku?', 'options' => ['kula', 'dalem', 'kawula', 'abdi'], 'correct' => 0, 'difficulty' => 'medium'],
+            ['prompt' => 'Crita rakyat "Jaka Tarub" nyritakake babagan?', 'options' => ['timun mas', 'bidadari', 'roro jonggrang', 'malin kundang'], 'correct' => 1, 'difficulty' => 'easy'],
+            ['prompt' => 'Apa gunane pasangan aksara Jawa?', 'options' => ['hiasan', 'mati aksara', 'ngubah swara', 'tandha wacan'], 'correct' => 1, 'difficulty' => 'medium'],
+            ['prompt' => 'Tembung "priyayi" asale saka basa?', 'options' => ['Jawa', 'Sansekerta', 'Arab', 'Kawi'], 'correct' => 1, 'difficulty' => 'hard'],
+            ['prompt' => 'Ukara "Adhik tindak sekolah" nggunakake basa?', 'options' => ['Ngoko lugu', 'Ngoko alus', 'Krama lugu', 'Krama alus'], 'correct' => 2, 'difficulty' => 'medium'],
+            ['prompt' => 'Sandhangan "cecak" wujude yaiku?', 'options' => ['titik', 'garis', 'kurung', 'cecak'], 'correct' => 0, 'difficulty' => 'easy'],
         ];
 
         foreach ($mcqPrompts as $index => $mcqData) {
@@ -74,20 +74,20 @@ class QuestionSeeder extends Seeder
             }
         }
 
-        // True/False Questions (12 soal)
+        // True/False Questions (12 soal tentang bahasa Jawa)
         $tfPrompts = [
-            ['prompt' => 'Indonesia adalah negara kepulauan terbesar di dunia.', 'answer' => true, 'difficulty' => 'easy'],
-            ['prompt' => 'Air mendidih pada suhu 100°C di permukaan laut.', 'answer' => true, 'difficulty' => 'easy'],
-            ['prompt' => 'Jakarta adalah ibukota Indonesia.', 'answer' => true, 'difficulty' => 'easy'],
-            ['prompt' => 'Matahari terbit dari barat.', 'answer' => false, 'difficulty' => 'easy'],
-            ['prompt' => 'Satu tahun memiliki 365 hari.', 'answer' => true, 'difficulty' => 'easy'],
-            ['prompt' => 'Fotosintesis terjadi pada malam hari.', 'answer' => false, 'difficulty' => 'medium'],
-            ['prompt' => 'DNA memiliki struktur double helix.', 'answer' => true, 'difficulty' => 'medium'],
-            ['prompt' => 'Gravitasi di bulan sama dengan di bumi.', 'answer' => false, 'difficulty' => 'medium'],
-            ['prompt' => 'Atom terdiri dari proton, neutron, dan elektron.', 'answer' => true, 'difficulty' => 'medium'],
-            ['prompt' => 'Kecepatan cahaya dalam vakum adalah konstan.', 'answer' => true, 'difficulty' => 'hard'],
-            ['prompt' => 'Energi dapat diciptakan dan dimusnahkan.', 'answer' => false, 'difficulty' => 'hard'],
-            ['prompt' => 'Teori relativitas dikemukakan oleh Newton.', 'answer' => false, 'difficulty' => 'hard'],
+            ['prompt' => 'Aksara Jawa duwe 20 aksara dhasar.', 'answer' => true, 'difficulty' => 'easy'],
+            ['prompt' => 'Basa krama luwih alus tinimbang basa ngoko.', 'answer' => true, 'difficulty' => 'easy'],
+            ['prompt' => 'Sandhangan "wulu" dipasang ing dhuwur aksara.', 'answer' => true, 'difficulty' => 'medium'],
+            ['prompt' => 'Tembung "turu" ing krama yaiku "sare".', 'answer' => true, 'difficulty' => 'easy'],
+            ['prompt' => 'Geguritan lan puisi iku padha wae.', 'answer' => false, 'difficulty' => 'medium'],
+            ['prompt' => 'Aksara murda namung kanggo nulis jeneng wong.', 'answer' => false, 'difficulty' => 'medium'],
+            ['prompt' => 'Basa Jawa kuno biasane nggunakake aksara Pallawa.', 'answer' => true, 'difficulty' => 'hard'],
+            ['prompt' => 'Tembang macapat duwe 11 jinis tembang.', 'answer' => true, 'difficulty' => 'hard'],
+            ['prompt' => 'Pasangan aksara dipasang ing sisih tengen aksara.', 'answer' => false, 'difficulty' => 'medium'],
+            ['prompt' => 'Crita wayang sumber utamane saka Ramayana lan Mahabharata.', 'answer' => true, 'difficulty' => 'easy'],
+            ['prompt' => 'Basa krama inggil luwih dhuwur tinimbang krama alus.', 'answer' => true, 'difficulty' => 'hard'],
+            ['prompt' => 'Sandhangan "pepet" kanggo swara "e" taling.', 'answer' => true, 'difficulty' => 'medium'],
         ];
 
         foreach ($tfPrompts as $index => $tfData) {
@@ -106,149 +106,149 @@ class QuestionSeeder extends Seeder
             ]);
         }
 
-        // Matching Questions (13 soal)
+        // Matching Questions (13 soal tentang bahasa Jawa)
         $matchingPrompts = [
             [
-                'prompt' => 'Jodohkan negara dengan ibukotanya.',
+                'prompt' => 'Jodohna aksara Jawa karo jenenge.',
                 'pairs' => [
-                    ['Indonesia', 'Jakarta'],
-                    ['Malaysia', 'Kuala Lumpur'],
-                    ['Thailand', 'Bangkok'],
-                    ['Singapura', 'Singapura']
+                    ['ꦲ', 'Ha'],
+                    ['ꦤ', 'Na'],
+                    ['ꦕ', 'Ca'],
+                    ['ꦫ', 'Ra']
                 ],
-                'distractors' => ['Manila', 'Hanoi'],
+                'distractors' => ['Ka', 'Da'],
                 'difficulty' => 'easy'
             ],
             [
-                'prompt' => 'Jodohkan planet dengan cirinya.',
+                'prompt' => 'Jodohna tembung ngoko karo krama.',
                 'pairs' => [
-                    ['Mars', 'Planet Merah'],
-                    ['Venus', 'Planet Terpanas'],
-                    ['Jupiter', 'Planet Terbesar'],
-                    ['Saturnus', 'Planet Bercincin']
+                    ['aku', 'kula'],
+                    ['kowe', 'panjenengan'],
+                    ['mangan', 'dhahar'],
+                    ['turu', 'sare']
                 ],
-                'distractors' => ['Planet Terdingin', 'Planet Terkecil'],
-                'difficulty' => 'easy'
-            ],
-            [
-                'prompt' => 'Jodohkan rumus dengan bentuknya.',
-                'pairs' => [
-                    ['a² + b²', 'Teorema Pythagoras'],
-                    ['E = mc²', 'Relativitas Einstein'],
-                    ['F = ma', 'Hukum Newton II'],
-                    ['PV = nRT', 'Gas Ideal']
-                ],
-                'distractors' => ['Hukum Ohm', 'Hukum Coulomb'],
+                'distractors' => ['tilem', 'nedha'],
                 'difficulty' => 'medium'
             ],
             [
-                'prompt' => 'Jodohkan unsur dengan simbolnya.',
+                'prompt' => 'Jodohna sandhangan karo jenenge.',
                 'pairs' => [
-                    ['Hidrogen', 'H'],
-                    ['Oksigen', 'O'],
-                    ['Karbon', 'C'],
-                    ['Natrium', 'Na']
+                    ['◌ꦴ', 'taling tarung'],
+                    ['◌ꦸ', 'suku'],
+                    ['◌ꦶ', 'wulu'],
+                    ['◌ꦺ', 'taling']
                 ],
-                'distractors' => ['K', 'Cl'],
+                'distractors' => ['pepet', 'cecak'],
                 'difficulty' => 'medium'
             ],
             [
-                'prompt' => 'Jodohkan penulis dengan karyanya.',
+                'prompt' => 'Jodohna tembang macapat karo guru lagune.',
                 'pairs' => [
-                    ['Pramoedya', 'Bumi Manusia'],
-                    ['Andrea Hirata', 'Laskar Pelangi'],
-                    ['Tere Liye', 'Hujan'],
-                    ['Dee Lestari', 'Supernova']
+                    ['Gambuh', '7u, 10u, 12i, 8u, 8o'],
+                    ['Mijil', '10i, 6o, 10e, 10i, 6i, 6u'],
+                    ['Sinom', '8a, 8i, 8a, 8i, 7i, 8u, 7a, 8i, 12a'],
+                    ['Pocung', '12u, 6a, 8i, 12a']
                 ],
-                'distractors' => ['Ronggeng Dukuh Paruk', 'Ayat-Ayat Cinta'],
-                'difficulty' => 'medium'
-            ],
-            [
-                'prompt' => 'Jodohkan organ dengan fungsinya.',
-                'pairs' => [
-                    ['Jantung', 'Memompa Darah'],
-                    ['Paru-paru', 'Pertukaran Gas'],
-                    ['Ginjal', 'Filter Darah'],
-                    ['Hati', 'Detoksifikasi']
-                ],
-                'distractors' => ['Produksi Hormon', 'Pencernaan'],
-                'difficulty' => 'easy'
-            ],
-            [
-                'prompt' => 'Jodohkan bahasa pemrograman dengan paradigmanya.',
-                'pairs' => [
-                    ['Java', 'Object-Oriented'],
-                    ['Haskell', 'Functional'],
-                    ['C', 'Procedural'],
-                    ['Prolog', 'Logic']
-                ],
-                'distractors' => ['Assembly', 'Scripting'],
+                'distractors' => ['8a, 8a, 8a', '12u, 12u, 12u'],
                 'difficulty' => 'hard'
             ],
             [
-                'prompt' => 'Jodohkan mata uang dengan negaranya.',
+                'prompt' => 'Jodohna tokoh wayang karo watake.',
                 'pairs' => [
-                    ['Rupiah', 'Indonesia'],
-                    ['Ringgit', 'Malaysia'],
-                    ['Peso', 'Filipina'],
-                    ['Baht', 'Thailand']
+                    ['Arjuna', 'Satria tampan'],
+                    ['Bima', 'Kuat lan gagah'],
+                    ['Yudhistira', 'Adil lan wicaksana'],
+                    ['Kresna', 'Pinter lan wicaksana']
                 ],
-                'distractors' => ['Vietnam', 'Singapura'],
+                'distractors' => ['Jahat', 'Pengecut'],
                 'difficulty' => 'easy'
             ],
             [
-                'prompt' => 'Jodohkan teknologi dengan pendirinya.',
+                'prompt' => 'Jodohna jinis karya sastra karo conto.',
                 'pairs' => [
-                    ['Microsoft', 'Bill Gates'],
-                    ['Apple', 'Steve Jobs'],
-                    ['Facebook', 'Mark Zuckerberg'],
-                    ['Tesla', 'Elon Musk']
+                    ['Geguritan', 'Dhandhanggula'],
+                    ['Cerkak', 'Crita cekak'],
+                    ['Novel', 'Durma Gandul'],
+                    ['Drama', 'Ketoprak']
                 ],
-                'distractors' => ['Larry Page', 'Jeff Bezos'],
+                'distractors' => ['Babad', 'Serat'],
                 'difficulty' => 'medium'
             ],
             [
-                'prompt' => 'Jodohkan struktur data dengan operasinya.',
+                'prompt' => 'Jodohna wilayah karo dialek basane.',
                 'pairs' => [
-                    ['Stack', 'LIFO'],
-                    ['Queue', 'FIFO'],
-                    ['Array', 'Random Access'],
-                    ['Linked List', 'Sequential Access']
+                    ['Yogyakarta', 'Basa Ngayogyakarta'],
+                    ['Surakarta', 'Basa Surakarta'],
+                    ['Banyumas', 'Basa Banyumasan'],
+                    ['Malang', 'Basa Malangan']
                 ],
-                'distractors' => ['Binary Search', 'Hash Function'],
-                'difficulty' => 'hard'
+                'distractors' => ['Basa Betawi', 'Basa Sunda'],
+                'difficulty' => 'medium'
             ],
             [
-                'prompt' => 'Jodohkan benua dengan karakteristiknya.',
+                'prompt' => 'Jodohna upacara adat karo tujuane.',
                 'pairs' => [
-                    ['Asia', 'Benua Terbesar'],
-                    ['Afrika', 'Benua Hitam'],
-                    ['Antartika', 'Benua Es'],
-                    ['Australia', 'Benua Terkecil']
+                    ['Tedak Siten', 'Anak umur 7 lapan'],
+                    ['Mitoni', 'Meteng 7 sasi'],
+                    ['Siraman', 'Resik sukma'],
+                    ['Sungkeman', 'Nyuwun pangestu']
                 ],
-                'distractors' => ['Benua Baru', 'Benua Tua'],
+                'distractors' => ['Nikahan', 'Sunatan'],
                 'difficulty' => 'easy'
             ],
             [
-                'prompt' => 'Jodohkan algoritma dengan kompleksitasnya.',
+                'prompt' => 'Jodohna crita rakyat karo asale.',
                 'pairs' => [
-                    ['Linear Search', 'O(n)'],
-                    ['Binary Search', 'O(log n)'],
-                    ['Bubble Sort', 'O(n²)'],
-                    ['Merge Sort', 'O(n log n)']
+                    ['Jaka Tarub', 'Jawa Tengah'],
+                    ['Sangkuriang', 'Jawa Barat'],
+                    ['Loro Jonggrang', 'Yogyakarta'],
+                    ['Timun Mas', 'Jawa Timur']
                 ],
-                'distractors' => ['O(1)', 'O(n³)'],
+                'distractors' => ['Bali', 'Sumatra'],
+                'difficulty' => 'medium'
+            ],
+            [
+                'prompt' => 'Jodohna pasangan aksara karo swara sing dipateni.',
+                'pairs' => [
+                    ['◌꧀ꦏ', 'ka mati'],
+                    ['◌꧀ꦠ', 'ta mati'],
+                    ['◌꧀ꦤ', 'na mati'],
+                    ['◌꧀ꦩ', 'ma mati']
+                ],
+                'distractors' => ['sa mati', 'la mati'],
                 'difficulty' => 'hard'
             ],
             [
-                'prompt' => 'Jodohkan vitamin dengan fungsinya.',
+                'prompt' => 'Jodohna jinis tembung karo conto.',
                 'pairs' => [
-                    ['Vitamin A', 'Kesehatan Mata'],
-                    ['Vitamin C', 'Antioksidan'],
-                    ['Vitamin D', 'Penyerapan Kalsium'],
-                    ['Vitamin K', 'Pembekuan Darah']
+                    ['Tembung Aran', 'omah'],
+                    ['Tembung Kriya', 'mlaku'],
+                    ['Tembung Sifat', 'ayu'],
+                    ['Tembung Katrangan', 'cepet']
                 ],
-                'distractors' => ['Metabolisme', 'Pertumbuhan'],
+                'distractors' => ['sesanti', 'paribasan'],
+                'difficulty' => 'easy'
+            ],
+            [
+                'prompt' => 'Jodohna raja Mataram karo gegayuhe.',
+                'pairs' => [
+                    ['Sultan Agung', 'Mataram Islam'],
+                    ['Panembahan Senopati', 'Pendiri Mataram'],
+                    ['Amangkurat I', 'Trunajaya'],
+                    ['Pakubuwono X', 'Surakarta']
+                ],
+                'distractors' => ['Majapahit', 'Singasari'],
+                'difficulty' => 'hard'
+            ],
+            [
+                'prompt' => 'Jodohna gamelan karo jenise.',
+                'pairs' => [
+                    ['Slendro', 'Laras 5 nada'],
+                    ['Pelog', 'Laras 7 nada'],
+                    ['Gendhing', 'Lagu gamelan'],
+                    ['Rebab', 'Piranti musik']
+                ],
+                'distractors' => ['Suling', 'Kendang'],
                 'difficulty' => 'medium'
             ]
         ];

@@ -14,28 +14,40 @@ class MaterialSeeder extends Seeder
     {
         $materials = [
             [
-                'title' => 'Matematika Dasar - Aljabar',
-                'description' => 'Materi pembelajaran aljabar untuk tingkat dasar mencakup operasi bilangan, persamaan linear, dan fungsi.',
-                'pdf_path' => 'materials/matematika-dasar-aljabar.pdf',
+                'title' => 'Aksara Jawa Nglegena',
+                'description' => 'Sinau aksara Jawa dhasar (ha-na-ca-ra-ka) kanggo maca lan nulis tembung-tembung prasaja.',
+                'pdf_path' => 'materials/aksara-jawa-nglegena.pdf',
                 'is_active' => true,
             ],
             [
-                'title' => 'Bahasa Indonesia - Tata Bahasa',
-                'description' => 'Materi tentang tata bahasa Indonesia meliputi struktur kalimat, kata benda, kata kerja, dan ejaan.',
-                'pdf_path' => 'materials/bahasa-indonesia-tata-bahasa.pdf',
+                'title' => 'Tembung Kriya lan Aran',
+                'description' => 'Ngerteni prabedane tembung kriya (ukara tanduk) lan tembung aran ing basa Jawa.',
+                'pdf_path' => 'materials/tembung-kriya-aran.pdf',
                 'is_active' => true,
             ],
             [
-                'title' => 'IPA - Sistem Tata Surya',
-                'description' => 'Pembelajaran tentang sistem tata surya, planet-planet, dan fenomena astronomi.',
-                'pdf_path' => 'materials/ipa-sistem-tata-surya.pdf',
+                'title' => 'Unggah-ungguh Basa',
+                'description' => 'Sinau tingkatan basa Jawa: ngoko, madya, lan krama kanggo komunikasi sing sopan.',
+                'pdf_path' => 'materials/unggah-ungguh-basa.pdf',
                 'is_active' => true,
             ],
             [
-                'title' => 'Sejarah - Kemerdekaan Indonesia',
-                'description' => 'Materi sejarah perjuangan kemerdekaan Indonesia dari masa kolonial hingga proklamasi.',
-                'pdf_path' => 'materials/sejarah-kemerdekaan-indonesia.pdf',
+                'title' => 'Crita Rakyat Jawa',
+                'description' => 'Kumpulan crita rakyat Jawa kaya Timun Mas, Jaka Tarub, lan Loro Jonggrang.',
+                'pdf_path' => 'materials/crita-rakyat-jawa.pdf',
                 'is_active' => false,
+            ],
+            [
+                'title' => 'Geguritan lan Tembang',
+                'description' => 'Sinau nulis geguritan (puisi Jawa) lan tembang dolanan anak Jawa.',
+                'pdf_path' => 'materials/geguritan-tembang.pdf',
+                'is_active' => true,
+            ],
+            [
+                'title' => 'Pasangan Aksara Jawa',
+                'description' => 'Sinau aksara pasangan (sandhangan) kanggo nulis tembung-tembung kompleks.',
+                'pdf_path' => 'materials/pasangan-aksara-jawa.pdf',
+                'is_active' => true,
             ],
         ];
 
