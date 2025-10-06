@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Card, Button, Modal, Input, Table, Select, Pagination, useConfirm } from "./ui";
+import Icon from "./ui/Icon";
 import { useToastContext } from "./ui/ToastProvider";
-import { questionService } from "../services/api";
+import { questionService, materialService } from "../services/api";
 
 const QuestionBank = () => {
   const [activeTab, setActiveTab] = useState('multiple_choice');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [selectedMaterial, setSelectedMaterial] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
@@ -25,6 +28,7 @@ const QuestionBank = () => {
   const { confirm } = useConfirm();
   
   const [formData, setFormData] = useState({
+    material_id: '',
     prompt: '',
     difficulty: 'easy', // Use lowercase to match backend
     // MCQ fields
@@ -41,8 +45,22 @@ const QuestionBank = () => {
 
   // Load questions when component mounts or tab/filter/page changes
   useEffect(() => {
+    loadMaterials();
     loadQuestions();
-  }, [activeTab, searchTerm, difficultyFilter, pagination.current_page]);
+  }, [activeTab, searchTerm, difficultyFilter, pagination.current_page, selectedMaterial]);
+
+  // Load materials for dropdown
+  const loadMaterials = async () => {
+    try {
+      const response = await materialService.getMaterials({ is_active: true });
+      // Handle different response formats
+      const materialsData = response.data || response || [];
+      setMaterials(materialsData);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+      toast.error('Gagal Memuat Materi', 'Gagal memuat daftar materi');
+    }
+  };
 
   const loadQuestions = async () => {
     try {
@@ -65,12 +83,16 @@ const QuestionBank = () => {
         page: pagination.current_page,
         per_page: pagination.per_page
       };
+      if (selectedMaterial) {
+        params.material_id = selectedMaterial;
+      }
       if (difficultyFilter) {
         params.difficulty = difficultyFilter;
       }
       if (searchTerm) {
         params.search = searchTerm;
       }
+      
       
       const response = await questionService.getQuestions(params);
       setQuestions(response.data || []);
@@ -177,6 +199,7 @@ const QuestionBank = () => {
 
       if (activeTab === 'multiple_choice') {
         questionData = {
+          material_id: formData.material_id,
           prompt: formData.prompt,
           difficulty: formData.difficulty, // Already lowercase
           subtype: 'mcq',
@@ -195,6 +218,7 @@ const QuestionBank = () => {
         }
         
         questionData = {
+          material_id: formData.material_id,
           prompt: formData.prompt,
           difficulty: formData.difficulty,
           subtype: 'matching',
@@ -205,6 +229,7 @@ const QuestionBank = () => {
         };
       } else if (activeTab === 'true_false') {
         questionData = {
+          material_id: formData.material_id,
           prompt: formData.prompt,
           difficulty: formData.difficulty,
           subtype: 'true_false',
@@ -271,6 +296,36 @@ const QuestionBank = () => {
     }
   };
 
+  // Reusable action buttons component
+  const renderActionButtons = (question) => (
+    <div className="flex space-x-2 relative">
+      <Button
+        size="small"
+        variant="secondary"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleOpenModal(question);
+        }}
+        className="inline-flex items-center gap-1 hover:bg-gray-100 hover:border-gray-300 hover:text-gray-700 transition-all duration-200"
+      >
+        <Icon name="edit" className="w-3 h-3" />
+        Edit
+      </Button>
+      <Button
+        size="small"
+        variant="destructive"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteQuestion(question);
+        }}
+        className="inline-flex items-center gap-1"
+      >
+        <Icon name="delete" className="w-3 h-3" />
+        Hapus
+      </Button>
+    </div>
+  );
+
   // Table columns untuk setiap tipe soal
   const multipleChoiceColumns = [
     { 
@@ -280,6 +335,15 @@ const QuestionBank = () => {
         <div className="max-w-xs truncate" title={question}>
           {question}
         </div>
+      )
+    },
+    { 
+      key: 'material', 
+      header: 'Materi',
+      render: (_, question) => (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-medium">
+          {question.material?.title || 'Tidak ada materi'}
+        </span>
       )
     },
     { 
@@ -315,30 +379,7 @@ const QuestionBank = () => {
     {
       key: 'actions',
       header: 'Aksi',
-      render: (_, question) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenModal(question);
-            }}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            ✏️ Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteQuestion(question);
-            }}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>Hapus
-          </button>
-        </div>
-      )
+      render: (_, question) => renderActionButtons(question)
     }
   ];
 
@@ -350,6 +391,15 @@ const QuestionBank = () => {
         <div className="max-w-xs truncate" title={question}>
           {question}
         </div>
+      )
+    },
+    { 
+      key: 'material', 
+      header: 'Materi',
+      render: (_, question) => (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-medium">
+          {question.material?.title || 'Tidak ada materi'}
+        </span>
       )
     },
     { 
@@ -395,30 +445,7 @@ const QuestionBank = () => {
     {
       key: 'actions',
       header: 'Aksi',
-      render: (_, question) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenModal(question);
-            }}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            ✏️ Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteQuestion(question);
-            }}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>Hapus
-          </button>
-        </div>
-      )
+      render: (_, question) => renderActionButtons(question)
     }
   ];
 
@@ -430,6 +457,15 @@ const QuestionBank = () => {
         <div className="max-w-xs truncate" title={question}>
           {question}
         </div>
+      )
+    },
+    { 
+      key: 'material', 
+      header: 'Materi',
+      render: (_, question) => (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm font-medium">
+          {question.material?.title || 'Tidak ada materi'}
+        </span>
       )
     },
     { 
@@ -478,30 +514,7 @@ const QuestionBank = () => {
     {
       key: 'actions',
       header: 'Aksi',
-      render: (_, question) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenModal(question);
-            }}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            ✏️ Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteQuestion(question);
-            }}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>Hapus
-          </button>
-        </div>
-      )
+      render: (_, question) => renderActionButtons(question)
     }
   ];
 
@@ -536,6 +549,7 @@ const QuestionBank = () => {
           (question.options?.findIndex(opt => opt === question.correctAnswer) || 0);
           
         setFormData({
+          material_id: question.material_id || '',
           prompt: question.prompt || question.question || '',
           difficulty: baseDifficulty,
           options: question.mcq_options ? 
@@ -555,6 +569,7 @@ const QuestionBank = () => {
         ];
         
         setFormData({
+          material_id: question.material_id || '',
           prompt: question.prompt || question.question || '',
           difficulty: baseDifficulty,
           options: ['', '', '', ''],
@@ -569,6 +584,7 @@ const QuestionBank = () => {
         console.log('Opening true_false modal with question:', question); // Debug log
         console.log('is_true value:', question.is_true); // Debug log
         setFormData({
+          material_id: question.material_id || '',
           prompt: question.prompt || question.question || '',
           difficulty: baseDifficulty,
           options: ['', '', '', ''],
@@ -584,6 +600,7 @@ const QuestionBank = () => {
     } else {
       // Creating new question
       setFormData({
+        material_id: '',
         prompt: '',
         difficulty: 'easy',
         options: ['', '', '', ''],
@@ -625,9 +642,24 @@ const QuestionBank = () => {
   };
 
   const tabs = [
-    { id: 'multiple_choice', label: '🔤 Multiple Choice', icon: '🔤' },
-    { id: 'matching', label: '� Menjodohkan', icon: '�' },
-    { id: 'true_false', label: '✅ True/False', icon: '✅' }
+    { 
+      id: 'multiple_choice', 
+      label: 'Multiple Choice', 
+      icon: 'multipleChoice',
+      description: 'Soal pilihan ganda'
+    },
+    { 
+      id: 'matching', 
+      label: 'Menjodohkan', 
+      icon: 'matching',
+      description: 'Soal mencocokkan pasangan'
+    },
+    { 
+      id: 'true_false', 
+      label: 'True/False', 
+      icon: 'trueFalse',
+      description: 'Soal benar atau salah'
+    }
   ];
 
   return (
@@ -635,36 +667,44 @@ const QuestionBank = () => {
       <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">❓ Bank Soal</h2>
-          <p className="text-gray-600">Kelola soal berdasarkan tipe</p>
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Icon name="questionBank" size={24} className="text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Bank Soal</h2>
+            <p className="text-gray-600">Kelola soal berdasarkan tipe</p>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          {tabs.map((tab) => (
-            <motion.button
-              key={tab.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setDifficultyFilter(''); // Reset filter when switching tabs
-                resetPagination(); // Reset pagination when switching tabs
-              }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </motion.button>
-          ))}
-        </nav>
+      <div className="mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+          <nav className="flex gap-2">
+            {tabs.map((tab) => (
+              <motion.button
+                key={tab.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSelectedMaterial(''); // Reset material filter when switching tabs
+                  setDifficultyFilter(''); // Reset filter when switching tabs
+                  resetPagination(); // Reset pagination when switching tabs
+                }}
+                className={`flex items-center px-4 py-3 rounded-md font-medium text-sm transition-all duration-200 focus:outline-none ${
+                  activeTab === tab.id
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+              >
+                <Icon name={tab.icon} size={18} className="mr-2" />
+                {tab.label}
+              </motion.button>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Content */}
@@ -690,19 +730,48 @@ const QuestionBank = () => {
           </div>
 
           {/* Search and Filter Section */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="🔍 Cari berdasarkan pertanyaan soal..."
-                value={searchTerm}
-                onChange={handleSearch}
-                disabled={loading}
-              />
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Search - Takes 6 columns on md and up */}
+            <div className="md:col-span-6">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-gray-700">Search</span>
+                  <Input
+                  type="text"
+                  placeholder="🔍 Cari berdasarkan pertanyaan soal..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  disabled={loading}
+                />
+              </div>
             </div>
-            <div className="sm:w-48">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter</span>
+            
+            {/* Material Filter - Takes 3 columns on md and up */}
+            <div className="md:col-span-3">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-gray-700">Materi</span>
+                <Select
+                  value={selectedMaterial}
+                  onChange={(e) => {
+                    setSelectedMaterial(e.target.value);
+                    resetPagination(); // Reset to page 1 when filter changes
+                  }}
+                  placeholder="Semua Materi"
+                  options={[
+                    {value: "", label: "Semua Materi"},
+                    ...materials.map(material => ({
+                      value: material.id,
+                      label: material.title
+                    }))
+                  ]}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            
+            {/* Difficulty Filter - Takes 3 columns on md and up */}
+            <div className="md:col-span-3">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-gray-700">Tingkat</span>
                 <Select
                   value={difficultyFilter}
                   onChange={(e) => {
@@ -710,7 +779,6 @@ const QuestionBank = () => {
                     resetPagination(); // Reset to page 1 when filter changes
                   }}
                   disabled={loading}
-                  className="min-w-[140px]"
                   placeholder="Semua"
                   options={[
                     { value: '', label: 'Semua Tingkat' },
@@ -745,6 +813,14 @@ const QuestionBank = () => {
                   Pencarian: "{searchTerm}"
                 </span>
               )}
+              {selectedMaterial && (
+                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  Materi: {materials.find(m => m.id == selectedMaterial)?.title || 'Unknown'}
+                </span>
+              )}
               {difficultyFilter && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -753,10 +829,11 @@ const QuestionBank = () => {
                   Filter: {difficultyFilter === 'easy' ? 'Mudah' : difficultyFilter === 'medium' ? 'Sedang' : 'Sulit'}
                 </span>
               )}
-              {(searchTerm || difficultyFilter) && (
+              {(searchTerm || selectedMaterial || difficultyFilter) && (
                 <button
                   onClick={() => {
                     setSearchTerm('');
+                    setSelectedMaterial('');
                     setDifficultyFilter('');
                     resetPagination();
                   }}
@@ -775,13 +852,13 @@ const QuestionBank = () => {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📝</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {(searchTerm || difficultyFilter)
+                {(searchTerm || selectedMaterial || difficultyFilter)
                   ? `Tidak ada soal ditemukan`
                   : 'Belum ada soal tersedia'
                 }
               </h3>
               <p className="text-gray-500 mb-6">
-                {(searchTerm || difficultyFilter)
+                {(searchTerm || selectedMaterial || difficultyFilter)
                   ? 'Coba ubah kata kunci pencarian atau filter, atau tambah soal baru.'
                   : `Mulai dengan menambahkan soal ${tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()}.`
                 }
@@ -847,6 +924,18 @@ const QuestionBank = () => {
         {/* Multiple Choice Form */}
         {activeTab === 'multiple_choice' && (
           <div className="space-y-6">
+            <Select
+              label="Materi"
+              value={formData.material_id}
+              onChange={(e) => setFormData({...formData, material_id: e.target.value})}
+              placeholder="Pilih Materi"
+              options={materials.map(material => ({
+                value: material.id,
+                label: material.title
+              }))}
+              required
+            />
+            
             <Input 
               label="Pertanyaan" 
               placeholder="Masukkan pertanyaan multiple choice"
@@ -901,6 +990,18 @@ const QuestionBank = () => {
         {/* Matching Form */}
         {activeTab === 'matching' && (
           <div className="space-y-6">
+            <Select
+              label="Materi"
+              value={formData.material_id}
+              onChange={(e) => setFormData({...formData, material_id: e.target.value})}
+              placeholder="Pilih Materi"
+              options={materials.map(material => ({
+                value: material.id,
+                label: material.title
+              }))}
+              required
+            />
+            
             <Input 
               label="Pertanyaan Menjodohkan" 
               placeholder="Masukkan instruksi untuk soal menjodohkan"
@@ -947,10 +1048,10 @@ const QuestionBank = () => {
                             setFormData({...formData, pairs: newPairs});
                           }
                         }}
-                        className="text-red-600 hover:text-red-800 disabled:text-gray-300"
+                        className="text-red-600 hover:text-red-800 disabled:text-gray-300 flex items-center"
                         disabled={formData.pairs.length <= 2}
                       >
-                        🗑️
+                        <Icon name="delete" className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -997,6 +1098,18 @@ const QuestionBank = () => {
         {/* True/False Form */}
         {activeTab === 'true_false' && (
           <div className="space-y-6">
+            <Select
+              label="Materi"
+              value={formData.material_id}
+              onChange={(e) => setFormData({...formData, material_id: e.target.value})}
+              placeholder="Pilih Materi"
+              options={materials.map(material => ({
+                value: material.id,
+                label: material.title
+              }))}
+              required
+            />
+            
             <Input 
               label="Pernyataan" 
               placeholder="Masukkan pernyataan untuk dijawab benar/salah"

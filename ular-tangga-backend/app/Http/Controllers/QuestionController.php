@@ -23,7 +23,7 @@ class QuestionController extends Controller
             $query = Question::with(['material', 'creator', 'mcqOptions', 'tfStatement', 'matchingPairs']);
 
             // Filter by material if provided
-            if ($request->has('material_id')) {
+            if ($request->has('material_id') && !empty($request->material_id)) {
                 $query->where('material_id', $request->material_id);
             }
 

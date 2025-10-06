@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Card, Button, Modal, Input, Table, Pagination, Select, useToast, useConfirm, ConfirmProvider,
+import { Card, Button, Modal, Input, Table, Pagination, Select, useConfirm, ConfirmProvider,
          Icon } from '../../../components/ui';
+import { useToastContext } from '../../../components/ui/ToastProvider';
 import { userService } from '../../../services/api';
 
 const UsersTab = () => {
@@ -10,7 +11,7 @@ const UsersTab = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   
-  const toast = useToast();
+  const toast = useToastContext();
   const { confirm } = useConfirm();
 
   const [users, setUsers] = useState([]);
@@ -92,23 +93,23 @@ const UsersTab = () => {
       key: 'actions',
       header: 'Aksi',
       render: (_, user) => (
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 relative">
           <Button
             size="small"
             variant="secondary"
             onClick={() => handleOpenModal(user)}
             disabled={loading}
-            className="inline-flex items-center gap-1"
+            className="inline-flex items-center gap-1 hover:bg-gray-100 hover:border-gray-300 hover:text-gray-700 transition-all duration-200"
           >
             <Icon name="edit" className="w-3 h-3" />
             Edit
           </Button>
           <Button
             size="small"
-            variant="outline"
+            variant="destructive"
             onClick={() => handleDeleteUser(user)}
             disabled={loading}
-            className="inline-flex items-center gap-1 text-red-600 border-red-300 hover:bg-red-50"
+            className="inline-flex items-center gap-1"
           >
             <Icon name="delete" className="w-3 h-3" />
             Delete
@@ -126,11 +127,11 @@ const UsersTab = () => {
       await loadUsers();
       setIsModalOpen(false);
       setSelectedItem(null);
-      toast.success('Berhasil!', `User "${userData.name}" berhasil dibuat`);
+      return { success: true, message: `User "${userData.name}" berhasil dibuat` };
     } catch (err) {
       setError(err.message || 'Gagal membuat user');
-      toast.error('Gagal!', err.message || 'Gagal membuat user baru');
       console.error('Error creating user:', err);
+      return { success: false, message: err.message || 'Gagal membuat user baru' };
     } finally {
       setLoading(false);
     }
@@ -144,11 +145,11 @@ const UsersTab = () => {
       await loadUsers();
       setIsModalOpen(false);
       setSelectedItem(null);
-      toast.success('Berhasil!', `User "${userData.name}" berhasil diupdate`);
+      return { success: true, message: `User "${userData.name}" berhasil diupdate` };
     } catch (err) {
       setError(err.message || 'Gagal mengupdate user');
-      toast.error('Gagal!', err.message || 'Gagal mengupdate user');
       console.error('Error updating user:', err);
+      return { success: false, message: err.message || 'Gagal mengupdate user' };
     } finally {
       setLoading(false);
     }
@@ -244,13 +245,21 @@ const UsersTab = () => {
         delete userData.password;
       }
 
+      let result;
       if (selectedItem) {
-        await handleUpdateUser(selectedItem.id, userData);
+        result = await handleUpdateUser(selectedItem.id, userData);
       } else {
-        await handleCreateUser(userData);
+        result = await handleCreateUser(userData);
+      }
+
+      if (result.success) {
+        toast.success('Berhasil!', result.message);
+      } else {
+        toast.error('Gagal!', result.message);
       }
     } catch (err) {
       console.error('Save user error:', err);
+      toast.error('Gagal!', 'Terjadi kesalahan yang tidak terduga');
     }
   };
 
@@ -394,9 +403,6 @@ const UsersTab = () => {
           />
         </div>
       </Modal>
-      
-      {/* Toast Container */}
-      <toast.ToastContainer />
     </motion.div>
   );
 };

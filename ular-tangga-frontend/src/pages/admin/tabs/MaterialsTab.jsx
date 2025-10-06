@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Card, Button, Modal, Input, Table, Pagination, useToast, useConfirm, ConfirmProvider,
+import { Card, Button, Modal, Input, Table, Pagination, useConfirm, ConfirmProvider,
          Icon, Toggle } from '../../../components/ui';
+import { useToastContext } from '../../../components/ui/ToastProvider';
 import { materialService } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -13,7 +14,7 @@ const MaterialsTab = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [togglingItems, setTogglingItems] = useState(new Set()); // Track which items are being toggled
   
-  const toast = useToast();
+  const toast = useToastContext();
   const { confirm } = useConfirm();
 
   const [materials, setMaterials] = useState([]);
@@ -166,23 +167,23 @@ const MaterialsTab = () => {
       key: 'actions',
       header: 'Aksi',
       render: (_, material) => (
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 relative">
           <Button
             size="small"
             variant="secondary"
             onClick={() => handleOpenModal(material)}
             disabled={loading}
-            className="inline-flex items-center gap-1"
+            className="inline-flex items-center gap-1 hover:bg-gray-100 hover:border-gray-300 hover:text-gray-700 transition-all duration-200"
           >
             <Icon name="edit" className="w-3 h-3" />
             Edit
           </Button>
           <Button
             size="small"
-            variant="outline"
+            variant="destructive"
             onClick={() => handleDeleteMaterial(material)}
             disabled={loading}
-            className="inline-flex items-center gap-1 text-red-600 border-red-300 hover:bg-red-50"
+            className="inline-flex items-center gap-1"
           >
             <Icon name="delete" className="w-3 h-3" />
             Delete
@@ -283,7 +284,6 @@ const MaterialsTab = () => {
       const createdMaterial = response?.data?.material || response?.material;
       
       if (createdMaterial || response?.message) {
-        toast.success('Berhasil!', `Material "${materialData.get('title')}" berhasil ditambahkan!`);
         setIsModalOpen(false);
         setSelectedItem(null);
         setFormData({
@@ -291,9 +291,10 @@ const MaterialsTab = () => {
           description: '',
           pdf_file: null
         });
-        loadMaterials(pagination.current_page, searchTerm);
+        await loadMaterials(pagination.current_page, searchTerm);
+        return { success: true, message: `Material "${materialData.get('title')}" berhasil ditambahkan!` };
       } else {
-        toast.error('Gagal!', 'Gagal menambahkan material');
+        return { success: false, message: 'Gagal menambahkan material' };
       }
     } catch (err) {
       console.error('Error creating material:', err);
@@ -302,9 +303,9 @@ const MaterialsTab = () => {
       if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
         const errorMessages = Object.values(errors).flat();
-        toast.error('Gagal!', errorMessages.join(', '));
+        return { success: false, message: errorMessages.join(', ') };
       } else {
-        toast.error('Gagal!', err.response?.data?.message || err.message || 'Gagal menambahkan material');
+        return { success: false, message: err.response?.data?.message || err.message || 'Gagal menambahkan material' };
       }
     } finally {
       setLoading(false);
@@ -324,7 +325,6 @@ const MaterialsTab = () => {
       const updatedMaterial = response?.data?.material || response?.material;
       
       if (updatedMaterial || response?.message) {
-        toast.success('Berhasil!', 'Material berhasil diperbarui!');
         setIsModalOpen(false);
         setSelectedItem(null);
         setFormData({
@@ -334,8 +334,9 @@ const MaterialsTab = () => {
         });
         // Reload materials to get fresh data
         await loadMaterials(pagination.current_page, searchTerm);
+        return { success: true, message: 'Material berhasil diperbarui!' };
       } else {
-        toast.error('Gagal!', 'Gagal memperbarui material');
+        return { success: false, message: 'Gagal memperbarui material' };
       }
     } catch (err) {
       console.error('Error updating material:', err);
@@ -344,13 +345,13 @@ const MaterialsTab = () => {
       if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
         const errorMessages = Object.values(errors).flat();
-        toast.error('Gagal!', errorMessages.join(', '));
+        return { success: false, message: errorMessages.join(', ') };
       } else if (err.response?.status === 422) {
-        toast.error('Gagal!', 'Data tidak valid. Periksa kembali input Anda.');
+        return { success: false, message: 'Data tidak valid. Periksa kembali input Anda.' };
       } else if (err.response?.status === 404) {
-        toast.error('Gagal!', 'Material tidak ditemukan.');
+        return { success: false, message: 'Material tidak ditemukan.' };
       } else {
-        toast.error('Gagal!', err.response?.data?.message || err.message || 'Gagal memperbarui material');
+        return { success: false, message: err.response?.data?.message || err.message || 'Gagal memperbarui material' };
       }
     } finally {
       setLoading(false);
@@ -375,9 +376,9 @@ const MaterialsTab = () => {
         console.log('Delete response:', response);
         
         if (response && (response.message || response.data?.message)) {
-          toast.success('Berhasil!', `Material "${material.title}" berhasil dihapus!`);
-          // Reload materials to get fresh data
+          // Reload materials to get fresh data first
           await loadMaterials(pagination.current_page, searchTerm);
+          toast.success('Berhasil!', `Material "${material.title}" berhasil dihapus!`);
         } else {
           toast.error('Gagal!', 'Gagal menghapus material');
         }
@@ -445,7 +446,7 @@ const MaterialsTab = () => {
     }
   };
 
-  const handleSaveMaterial = () => {
+  const handleSaveMaterial = async () => {
     // Validate required fields
     if (!formData.title || formData.title.trim() === '') {
       toast.error('Validasi Gagal!', 'Judul materi harus diisi');
@@ -472,16 +473,23 @@ const MaterialsTab = () => {
       submitData.append('pdf_file', formData.pdf_file);
     }
 
+    let result;
     // For updates, preserve existing is_active status if not explicitly changed
     if (selectedItem) {
       submitData.append('is_active', selectedItem.is_active ? '1' : '0');
       // Add _method for Laravel to handle PUT requests properly
       submitData.append('_method', 'PUT');
-      handleUpdateMaterial(selectedItem.id, submitData);
+      result = await handleUpdateMaterial(selectedItem.id, submitData);
     } else {
       // For new materials, default to active
       submitData.append('is_active', '1');
-      handleCreateMaterial(submitData);
+      result = await handleCreateMaterial(submitData);
+    }
+
+    if (result.success) {
+      toast.success('Berhasil!', result.message);
+    } else {
+      toast.error('Gagal!', result.message);
     }
   };
 
@@ -654,7 +662,6 @@ const MaterialsTab = () => {
           </div>
         </div>
       </Modal>
-      <toast.ToastContainer />
     </motion.div>
   </ConfirmProvider>
   );

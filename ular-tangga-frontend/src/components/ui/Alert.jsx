@@ -16,17 +16,34 @@ const Alert = ({
   className = ''
 }) => {
   const [visible, setVisible] = useState(isVisible);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     setVisible(isVisible);
+    if (isVisible) {
+      setProgress(100); // Reset progress when toast becomes visible
+    }
   }, [isVisible]);
 
   useEffect(() => {
     if (visible && autoClose) {
-      const timer = setTimeout(() => {
+      // Animate progress bar
+      const progressTimer = setInterval(() => {
+        setProgress(prev => {
+          const newProgress = prev - (100 / (duration / 100));
+          return newProgress <= 0 ? 0 : newProgress;
+        });
+      }, 100);
+
+      // Auto close timer
+      const closeTimer = setTimeout(() => {
         handleClose();
       }, duration);
-      return () => clearTimeout(timer);
+
+      return () => {
+        clearInterval(progressTimer);
+        clearTimeout(closeTimer);
+      };
     }
   }, [visible, autoClose, duration]);
 
@@ -36,9 +53,6 @@ const Alert = ({
       setTimeout(onClose, 300); // Wait for animation to complete
     }
   };
-
-  // Calculate progress bar duration to account for close animation delay
-  const progressDuration = autoClose ? (duration - 300) / 1000 : duration / 1000;
 
   const getAlertConfig = () => {
     const configs = {
@@ -149,11 +163,9 @@ const Alert = ({
 
             {/* Progress bar for auto-close */}
             {autoClose && (
-              <motion.div
-                initial={{ width: '100%' }}
-                animate={{ width: '0%' }}
-                transition={{ duration: progressDuration, ease: "linear" }}
-                className={`h-1 ${config.progressBar}`}
+              <div
+                className={`h-1 ${config.progressBar} transition-all duration-100 ease-linear`}
+                style={{ width: `${progress}%` }}
               />
             )}
           </div>
@@ -167,24 +179,65 @@ const Alert = ({
 export const useToast = () => {
   const [toasts, setToasts] = useState([]);
   const timersRef = useRef(new Map());
+  const debounceRef = useRef(new Map()); // For debouncing similar toasts
+  const maxToasts = 3; // Limit maximum number of toasts
 
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       timersRef.current.forEach(timer => clearTimeout(timer));
       timersRef.current.clear();
+      debounceRef.current.clear();
     };
   }, []);
 
   const showToast = (options) => {
+    // Create a unique key for this toast type/message combination
+    const toastKey = `${options.type}-${options.title}-${options.message}`;
+    
+    // Check if we recently showed this exact toast (debounce)
+    const now = Date.now();
+    const lastShown = debounceRef.current.get(toastKey);
+    if (lastShown && (now - lastShown) < 1000) { // 1 second debounce
+      return null;
+    }
+    
+    // Check if similar toast is already showing
+    const existingToast = toasts.find(toast => 
+      toast.type === options.type && 
+      toast.title === options.title && 
+      toast.message === options.message
+    );
+    
+    // If similar toast exists, don't add new one
+    if (existingToast) {
+      return existingToast.id;
+    }
+
+    // Record this toast in debounce map
+    debounceRef.current.set(toastKey, now);
+
     const id = Date.now() + Math.random();
     const toast = { ...options, id, isVisible: true };
     
-    setToasts(prev => [...prev, toast]);
+    setToasts(prev => {
+      // If we're at max capacity, remove the oldest toast
+      let newToasts = [...prev];
+      if (newToasts.length >= maxToasts) {
+        const oldestToast = newToasts[0];
+        removeToast(oldestToast.id);
+        newToasts = newToasts.slice(1);
+      }
+      return [...newToasts, toast];
+    });
 
     // Auto remove after duration
     const timer = setTimeout(() => {
       removeToast(id);
+      // Clean up debounce entry after toast is removed
+      setTimeout(() => {
+        debounceRef.current.delete(toastKey);
+      }, 500);
     }, options.duration || 3000);
     
     // Store timer reference for cleanup
@@ -202,6 +255,18 @@ export const useToast = () => {
     }
     
     setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  const clearAllToasts = () => {
+    // Clear all timers
+    timersRef.current.forEach(timer => clearTimeout(timer));
+    timersRef.current.clear();
+    
+    // Clear debounce map
+    debounceRef.current.clear();
+    
+    // Clear all toasts
+    setToasts([]);
   };
 
   const success = (title, message, options = {}) => {
@@ -240,7 +305,8 @@ export const useToast = () => {
     warning,
     info,
     ToastContainer,
-    removeToast
+    removeToast,
+    clearAllToasts
   };
 };
 

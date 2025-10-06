@@ -4,6 +4,7 @@ import UsersTab from '../tabs/UsersTab';
 import MaterialsTab from '../tabs/MaterialsTab';
 import QuestionsTab from '../tabs/QuestionsTab';
 import AnalyticsTab from '../tabs/AnalyticsTab';
+import { ToastProvider } from '../../../components/ui/ToastProvider';
 
 const TabContent = ({ activeTab, totalUsers }) => {
   const renderTabContent = () => {
@@ -11,9 +12,17 @@ const TabContent = ({ activeTab, totalUsers }) => {
       case 'overview':
         return <OverviewTab totalUsers={totalUsers} />;
       case 'users':
-        return <UsersTab />;
+        return (
+          <ToastProvider>
+            <UsersTab />
+          </ToastProvider>
+        );
       case 'materials':
-        return <MaterialsTab />;
+        return (
+          <ToastProvider>
+            <MaterialsTab />
+          </ToastProvider>
+        );
       case 'questions':
         return <QuestionsTab />;
       case 'analytics':

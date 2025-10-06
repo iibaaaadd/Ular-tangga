@@ -17,7 +17,9 @@ const Table = ({ columns, data, onRowClick, className = '', ...props }) => {
               {columns.map((column, index) => (
                 <th
                   key={index}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                    column.key === 'actions' ? 'w-auto whitespace-nowrap' : ''
+                  }`}
                 >
                   {column.header}
                 </th>
@@ -36,8 +38,13 @@ const Table = ({ columns, data, onRowClick, className = '', ...props }) => {
                 whileHover={{ backgroundColor: '#f9fafb' }}
               >
                 {columns.map((column, colIndex) => (
-                  <td key={colIndex} className="px-4 py-4 text-sm text-gray-900">
-                    <div className="max-w-xs overflow-hidden">
+                  <td 
+                    key={colIndex} 
+                    className={`px-4 py-4 text-sm text-gray-900 ${
+                      column.key === 'actions' ? 'relative whitespace-nowrap' : ''
+                    }`}
+                  >
+                    <div className={column.key === 'actions' ? 'relative' : 'max-w-xs overflow-hidden'}>
                       {column.render ? column.render(row[column.key], row) : row[column.key]}
                     </div>
                   </td>

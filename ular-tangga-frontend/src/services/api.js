@@ -164,6 +164,7 @@ export const questionService = {
       if (filters.subtype) params.append('subtype', filters.subtype);
       if (filters.difficulty) params.append('difficulty', filters.difficulty);
       if (filters.created_by) params.append('created_by', filters.created_by);
+      if (filters.material_id) params.append('material_id', filters.material_id);
       if (filters.search) params.append('search', filters.search);
       if (filters.page) params.append('page', filters.page);
       if (filters.per_page) params.append('per_page', filters.per_page);
@@ -172,6 +173,7 @@ export const questionService = {
       const url = queryString ? `/questions?${queryString}` : '/questions';
       
       const response = await api.get(url);
+      return response.data;
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -259,9 +261,7 @@ export const materialService = {
   // Get all materials with pagination and search
   async getMaterials(params = {}) {
     try {
-      console.log('MaterialService: Making request to /materials with params:', params);
       const response = await api.get('/materials', { params });
-      console.log('MaterialService: Raw response:', response);
       return response.data;
     } catch (error) {
       console.error('MaterialService: Error getting materials:', error);

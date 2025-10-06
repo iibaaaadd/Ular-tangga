@@ -169,12 +169,13 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
       key: 'actions',
       header: 'Aksi',
       render: (_, room) => (
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 relative">
           {room.status === 'waiting' && (
             <Button 
               size="small" 
               variant="outline"
               onClick={() => handleStartStudying(room.room_code)}
+              className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200"
             >
               📚 Mulai Belajar
             </Button>
@@ -184,6 +185,7 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
               size="small" 
               variant="primary"
               onClick={() => handleStartGame(room.room_code)}
+              className="hover:bg-blue-700 transition-all duration-200"
             >
               🎮 Mulai Game
             </Button>
@@ -192,8 +194,9 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
             size="small" 
             variant="outline"
             onClick={() => setSelectedRoom(room)}
+            className="hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
           >
-            �️ Detail
+            👁️ Detail
           </Button>
         </div>
       )
