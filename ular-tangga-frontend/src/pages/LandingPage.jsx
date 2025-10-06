@@ -1,8 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import logoImage from '../assets/Images/logo.png';
+import Icon from '../components/ui/Icon';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 const LandingPage = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    // Trigger loading sequence
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    
+    // Step through entrance animations
+    const stepTimers = [
+      setTimeout(() => setCurrentStep(1), 800),
+      setTimeout(() => setCurrentStep(2), 1400),
+      setTimeout(() => setCurrentStep(3), 2000),
+    ];
+
+    return () => {
+      clearTimeout(timer);
+      stepTimers.forEach(clearTimeout);
+    };
+  }, []);
+
+  // Entrance animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.3
+      }
+    }
+  };
+
+  const slideUpVariants = {
+    hidden: { y: 100, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 120,
+        duration: 0.8
+      }
+    }
+  };
+
+  const scaleInVariants = {
+    hidden: { scale: 0, opacity: 0 },
+    visible: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100,
+        duration: 0.6
+      }
+    }
+  };
+
+  const fadeInVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: "easeOut" }
+    }
+  };
+
   const floatingVariants = {
     animate: {
       y: [0, -20, 0],
@@ -13,6 +85,71 @@ const LandingPage = () => {
       }
     }
   };
+
+  // Loading Screen Component
+  const LoadingScreen = () => (
+    <motion.div
+      className="fixed inset-0 bg-gradient-to-br from-pink-500 via-rose-500 to-pink-600 flex items-center justify-center z-50"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      exit={{ 
+        opacity: 0,
+        scale: 1.1,
+        transition: { duration: 0.8, ease: "easeInOut" }
+      }}
+    >
+      <div className="text-center">
+        <motion.div
+          className="mb-6"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ 
+            scale: [0, 1.2, 1],
+            rotate: [0, 360, 0]
+          }}
+          transition={{ 
+            duration: 1.5,
+            ease: "easeOut"
+          }}
+        >
+          <img 
+            src={logoImage} 
+            alt="Cakra Basa Logo" 
+            className="w-24 h-24 mx-auto"
+          />
+        </motion.div>
+        <motion.h1
+          className="text-4xl font-bold text-white mb-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+        >
+          Cakra Basa
+        </motion.h1>
+        <motion.div
+          className="flex justify-center space-x-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.5 }}
+        >
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="w-3 h-3 bg-white rounded-full"
+              animate={{ 
+                scale: [1, 1.5, 1],
+                opacity: [0.5, 1, 0.5]
+              }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                delay: i * 0.2
+              }}
+            />
+          ))}
+        </motion.div>
+      </div>
+    </motion.div>
+  );
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
@@ -29,33 +166,13 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-100 to-pink-200 relative overflow-hidden">
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-4 h-4 bg-pink-300/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              x: [0, Math.random() * 50 - 25, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+    <>
+      <AnimatePresence>
+        {!isLoaded && <LoadingScreen />}
+      </AnimatePresence>
+      
+      <AnimatedBackground variant="default" particleCount={20}>
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="max-w-6xl w-full">
           {/* Hero Section */}
           <motion.div 
@@ -65,12 +182,16 @@ const LandingPage = () => {
             transition={{ duration: 1 }}
           >
             <motion.div
-              className="inline-block mb-6"
+              className="inline-block"
               variants={floatingVariants}
               animate="animate"
             >
-              <div className="text-8xl mb-4 filter drop-shadow-lg">
-                🎮✨
+              <div className="filter drop-shadow-lg flex justify-center items-center gap-4">
+                <img 
+                  src={logoImage} 
+                  alt="Cakra Basa Logo" 
+                  className="w-40 h-40"
+                />
               </div>
             </motion.div>
             
@@ -80,7 +201,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              QuizBattle Arena
+              Cakra Basa
             </motion.h1>
             
             <motion.div
@@ -100,8 +221,8 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              Platform pembelajaran interaktif yang mengubah cara belajar menjadi pengalaman yang 
-              <span className="text-pink-600 font-semibold"> menyenangkan</span> dan 
+              Platform pembelajaran bahasa Jawa interaktif yang mengubah cara belajar aksara dan kosakata menjadi pengalaman yang 
+              <span className="text-pink-600 font-semibold"> asik</span> lan 
               <span className="text-rose-600 font-semibold"> kompetitif</span>!
             </motion.p>
           </motion.div>
@@ -121,14 +242,14 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-white/20 transform -skew-y-6 scale-110 group-hover:scale-125 transition-transform duration-300"></div>
                 <div className="relative z-10">
                   <motion.div 
-                    className="text-6xl mb-4"
+                    className="mb-4 flex justify-center"
                     whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
                     transition={{ duration: 0.5 }}
                   >
-                    �
+                    <Icon name="gamepad" size={64} className="text-white" />
                   </motion.div>
-                  <h3 className="text-3xl font-bold text-white mb-2">Masuk Game</h3>
-                  <p className="text-pink-100">Bergabung dengan jutaan pemain</p>
+                  <h3 className="text-3xl font-bold text-white mb-2">Mlebu</h3>
+                  <p className="text-pink-100">Gabung karo kanca-kanca liyane</p>
                 </div>
               </Link>
             </motion.div>
@@ -141,14 +262,14 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-white/20 transform skew-y-6 scale-110 group-hover:scale-125 transition-transform duration-300"></div>
                 <div className="relative z-10">
                   <motion.div 
-                    className="text-6xl mb-4"
+                    className="mb-4 flex justify-center"
                     whileHover={{ scale: 1.2, rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 0.5 }}
                   >
-                    ⭐
+                    <Icon name="users" size={64} className="text-white" />
                   </motion.div>
-                  <h3 className="text-3xl font-bold text-white mb-2">Mulai Petualangan</h3>
-                  <p className="text-rose-100">Daftar gratis sekarang juga</p>
+                  <h3 className="text-3xl font-bold text-white mb-2">Daftar</h3>
+                  <p className="text-rose-100">Wiwiti sinau basa Jawa saiki</p>
                 </div>
               </Link>
             </motion.div>
@@ -166,8 +287,8 @@ const LandingPage = () => {
               whileInView={{ scale: [0.9, 1.05, 1] }}
               transition={{ duration: 0.6 }}
             >
-              Kenapa Harus
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-600"> QuizBattle</span>?
+              Kenapa Kudu Sinau
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-600"> Cakra Basa</span>?
             </motion.h2>
             
             <motion.div 
@@ -191,7 +312,7 @@ const LandingPage = () => {
                 </motion.div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">3 Mode Seru</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Multiple Choice, True/False, dan Matching - beragam tantangan untuk mengasah otak!
+                  Multiple Choice, Bener-Salah, lan Matchingnan - macem-macem tantangan kanggo ngasah kawruh basa Jawa!
                 </p>
               </motion.div>
 
@@ -209,7 +330,7 @@ const LandingPage = () => {
                 </motion.div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Real-time Battle</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Bertarung langsung dengan teman-teman dalam waktu nyata. Siapa yang tercepat?
+                  Adu pinter karo kanca-kanca ing wektu nyata. Sapa sing paling cepet njawab pitakon basa Jawa?
                 </p>
               </motion.div>
 
@@ -225,9 +346,9 @@ const LandingPage = () => {
                 >
                   🏆
                 </motion.div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">Leaderboard</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">Papan Juara</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Kompetisi seru dengan sistem ranking dan reward untuk para juara!
+                  Kompetisi seru karo sistem ranking lan hadiah kanggo para jawara basa Jawa!
                 </p>
               </motion.div>
             </motion.div>
@@ -245,7 +366,7 @@ const LandingPage = () => {
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <span>Scroll untuk melihat lebih banyak</span>
+              <span>Gulung mudhun kanggo weruh luwih akeh</span>
               <motion.div
                 animate={{ y: [0, 5, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -255,8 +376,9 @@ const LandingPage = () => {
             </motion.div>
           </motion.div>
         </div>
-      </div>
-    </div>
+        </div>
+      </AnimatedBackground>
+    </>
   );
 };
 

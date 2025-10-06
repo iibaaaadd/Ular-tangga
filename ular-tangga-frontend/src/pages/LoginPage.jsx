@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -38,8 +39,8 @@ const LoginPage = () => {
 
   const fillDemoAccount = (role) => {
     const accounts = {
-      admin: { email: 'admin@test.com', password: 'password' },
-      teacher: { email: 'teacher@test.com', password: 'password' },
+      admin: { email: 'admin@example.com', password: 'password123' },
+      teacher: { email: 'teacher@example.com', password: 'password123' },
       student: { email: 'student@test.com', password: 'password' }
     };
     
@@ -47,7 +48,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-100 to-pink-200 flex items-center justify-center p-4">
+    <AnimatedBackground variant="default" particleCount={15}>
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -140,13 +142,13 @@ const LoginPage = () => {
               onClick={() => fillDemoAccount('admin')}
               className="w-full text-left bg-purple-100 hover:bg-purple-200 px-3 py-2 rounded text-sm text-gray-700 transition-colors border border-purple-200"
             >
-              👑 <strong>Admin:</strong> admin@test.com
+              👑 <strong>Admin:</strong> admin@example.com
             </button>
             <button
               onClick={() => fillDemoAccount('teacher')}
               className="w-full text-left bg-green-100 hover:bg-green-200 px-3 py-2 rounded text-sm text-gray-700 transition-colors border border-green-200"
             >
-              👨‍🏫 <strong>Guru:</strong> teacher@test.com
+              👨‍🏫 <strong>Guru:</strong> teacher@example.com
             </button>
             <button
               onClick={() => fillDemoAccount('student')}
@@ -158,7 +160,8 @@ const LoginPage = () => {
           <p className="text-gray-500 text-xs mt-2 text-center">Password: <strong>password</strong></p>
         </div>
       </div>
-    </div>
+      </div>
+    </AnimatedBackground>
   );
 };
 

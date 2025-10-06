@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -51,29 +52,30 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 flex items-center justify-center p-4">
+    <AnimatedBackground variant="default" particleCount={15}>
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1 className="text-4xl font-bold text-white mb-2 hover:scale-105 transition-transform">
-              🐍 Ular Tangga 🪜
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-2 hover:scale-105 transition-transform">
+              🎮 QuizBattle Arena ✨
             </h1>
           </Link>
-          <p className="text-white/80">Daftar untuk mulai bermain</p>
+          <p className="text-gray-600">Daftar untuk mulai petualangan</p>
         </div>
 
         {/* Register Form */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 shadow-2xl">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-pink-200/50">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Nama Lengkap
               </label>
               <input
@@ -84,13 +86,13 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-pink-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent disabled:opacity-50"
                 placeholder="Masukkan nama lengkap"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <input
@@ -101,7 +103,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-pink-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent disabled:opacity-50"
                 placeholder="Masukkan email"
               />
             </div>
@@ -115,7 +117,7 @@ const RegisterPage = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
@@ -126,13 +128,13 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-pink-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent disabled:opacity-50"
                 placeholder="Minimal 6 karakter"
               />
             </div>
 
             <div>
-              <label htmlFor="password_confirmation" className="block text-sm font-medium text-white mb-2">
+              <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-2">
                 Konfirmasi Password
               </label>
               <input
@@ -143,7 +145,7 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent disabled:opacity-50"
+                className="w-full px-4 py-3 bg-white border border-pink-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent disabled:opacity-50"
                 placeholder="Ulangi password"
               />
             </div>
@@ -151,7 +153,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:from-pink-300 disabled:to-rose-300 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -166,44 +168,45 @@ const RegisterPage = () => {
 
           {/* Links */}
           <div className="mt-6 text-center space-y-2">
-            <p className="text-white/80">
+            <p className="text-gray-600">
               Sudah punya akun?{' '}
-              <Link to="/login" className="text-green-300 hover:text-green-200 font-semibold">
+              <Link to="/login" className="text-pink-600 hover:text-pink-700 font-semibold">
                 Masuk di sini
               </Link>
             </p>
-            <Link to="/" className="block text-white/60 hover:text-white/80 text-sm">
+            <Link to="/" className="block text-gray-500 hover:text-gray-700 text-sm">
               ← Kembali ke beranda
             </Link>
           </div>
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 bg-white/5 backdrop-blur-sm rounded-lg p-4">
-          <h3 className="text-white font-semibold mb-3 text-center">📝 Informasi Registrasi:</h3>
-          <div className="space-y-2 text-sm text-white/80">
+        <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-lg p-4 border border-pink-200/50">
+          <h3 className="text-gray-700 font-semibold mb-3 text-center">📝 Informasi Registrasi:</h3>
+          <div className="space-y-2 text-sm text-gray-600">
             <div className="flex items-start space-x-2">
-              <span>�‍🎓</span>
+              <span>👨‍🎓</span>
               <div>
-                <strong className="text-blue-300">Akun Siswa:</strong> Anda akan terdaftar sebagai siswa dan dapat bermain game serta melihat leaderboard
+                <strong className="text-pink-600">Akun Siswa:</strong> Anda akan terdaftar sebagai siswa dan dapat bermain game serta melihat leaderboard
               </div>
             </div>
             <div className="flex items-start space-x-2">
-              <span>�</span>
+              <span>👑</span>
               <div>
-                <strong className="text-yellow-300">Role Lain:</strong> Untuk menjadi guru atau admin, hubungi administrator sistem
+                <strong className="text-rose-600">Role Lain:</strong> Untuk menjadi guru atau admin, hubungi administrator sistem
               </div>
             </div>
             <div className="flex items-start space-x-2">
-              <span>�</span>
+              <span>🎮</span>
               <div>
-                <strong className="text-green-300">Mulai Bermain:</strong> Setelah registrasi, join kelas dengan kode dari guru Anda
+                <strong className="text-pink-600">Mulai Bermain:</strong> Setelah registrasi, join kelas dengan kode dari guru Anda
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AnimatedBackground>
   );
 };
 
