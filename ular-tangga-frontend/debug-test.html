@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test - Student Dashboard</title>
+</head>
+<body>
+    <h1>Student Dashboard Debug Test</h1>
+    
+    <p>Jika Anda melihat halaman ini, berarti aplikasi berjalan. Coba navigasikan ke:</p>
+    
+    <ul>
+        <li><a href="http://localhost:5173/login" target="_blank">Login Page</a></li>
+        <li><a href="http://localhost:5173/student/dashboard" target="_blank">Student Dashboard</a> (perlu login dulu)</li>
+    </ul>
+    
+    <h2>Troubleshooting:</h2>
+    <ol>
+        <li>Pastikan frontend running: <code>npm run dev</code></li>
+        <li>Pastikan backend running: <code>php artisan serve</code></li>
+        <li>Cek console browser untuk error</li>
+    </ol>
+    
+    <script>
+        console.log('Debug test page loaded');
+        console.log('Current URL:', window.location.href);
+        console.log('Timestamp:', new Date().toISOString());
+    </script>
+</body>
+</html>

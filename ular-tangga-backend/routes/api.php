@@ -38,8 +38,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('game-rooms')->group(function () {
         Route::get('/', [GameRoomController::class, 'index']); // Get teacher's rooms
         Route::post('/', [GameRoomController::class, 'store']); // Create new room
+        Route::get('/student/joined', [GameRoomController::class, 'getStudentRooms']); // Get student's joined rooms
         Route::get('/{roomCode}', [GameRoomController::class, 'show']); // Get room details
         Route::post('/join', [GameRoomController::class, 'joinRoom']); // Join room (students)
+        Route::post('/leave', [GameRoomController::class, 'leaveRoom']); // Leave room (students)
+        Route::post('/update-ready', [GameRoomController::class, 'updateParticipantReady']); // Update participant ready status
         Route::post('/{roomCode}/start-studying', [GameRoomController::class, 'startStudying']); // Start study phase
         Route::post('/{roomCode}/start-game', [GameRoomController::class, 'startGame']); // Start game
         Route::get('/{roomCode}/leaderboard', [GameRoomController::class, 'getLeaderboard']); // Get leaderboard

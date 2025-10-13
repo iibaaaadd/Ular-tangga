@@ -14,6 +14,9 @@ import AdminDashboard from './pages/admin/Dashboard';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import StudentDashboard from './pages/student/Dashboard';
 
+// Import room components
+import RoomController from './components/room/RoomController';
+
 // Placeholder components untuk halaman lain
 const GameRoom = () => (
   <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
@@ -101,6 +104,23 @@ function App() {
             <RoleProtectedRoute allowedRoles={['student', 'admin']}>
               <StudentDashboard />
             </RoleProtectedRoute>
+          } />
+
+          {/* Room routes - accessible by teachers and students */}
+          <Route path="/room/:roomCode" element={
+            <ProtectedRoute>
+              <RoomController />
+            </ProtectedRoute>
+          } />
+          <Route path="/room/:roomCode/study" element={
+            <ProtectedRoute>
+              <RoomController />
+            </ProtectedRoute>
+          } />
+          <Route path="/room/:roomCode/game" element={
+            <ProtectedRoute>
+              <RoomController />
+            </ProtectedRoute>
           } />
 
           {/* Legacy admin & teacher routes - redirect to new dashboards */}

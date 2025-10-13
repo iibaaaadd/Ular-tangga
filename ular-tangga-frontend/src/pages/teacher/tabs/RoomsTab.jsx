@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { Card, Button, Table, Modal, Input, Select, FilterSection } from '../../../components/ui';
 import { gameRoomService, materialService } from '../../../services/api';
 
 const RoomsTab = ({ setIsModalOpen, setModalType }) => {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,14 +88,10 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
 
   const handleStartStudying = async (roomCode) => {
     try {
-      const response = await gameRoomService.startStudying(roomCode);
-      if (response.status === 'success') {
-        fetchRooms(); // Refresh data
-        alert('Fase belajar dimulai!');
-      }
+      // Navigate to room controller using React Router
+      navigate(`/room/${roomCode}`);
     } catch (error) {
-      console.error('Error starting study phase:', error);
-      alert('Gagal memulai fase belajar.');
+      console.error('Error navigating to room:', error);
     }
   };
 
@@ -216,17 +214,17 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
               onClick={() => handleStartStudying(room.room_code)}
               className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200"
             >
-              📚 Mulai Belajar
+              🏫 Masuk Room
             </Button>
           )}
-          {room.status === 'studying' && (
+          {(room.status === 'studying' || room.status === 'playing') && (
             <Button 
               size="small" 
               variant="primary"
-              onClick={() => handleStartGame(room.room_code)}
+              onClick={() => handleStartStudying(room.room_code)}
               className="hover:bg-blue-700 transition-all duration-200"
             >
-              🎮 Mulai Game
+              � Masuk Room
             </Button>
           )}
           <Button 

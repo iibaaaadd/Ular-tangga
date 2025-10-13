@@ -13,7 +13,8 @@ const TabContent = ({
   joinedRooms = [],
   gameHistory = [],
   leaderboard = [],
-  achievements = []
+  achievements = [],
+  user
 }) => {
   // Mock data sebagai fallback
   const defaultJoinedRooms = [
@@ -52,13 +53,14 @@ const TabContent = ({
             setActiveTab={setActiveTab}
             setIsModalOpen={setIsModalOpen}
             setModalType={setModalType}
-            achievements={achievements.length > 0 ? achievements : defaultAchievements}
+            user={user}
+            joinedRooms={joinedRooms}
           />
         );
       case 'rooms':
         return (
           <RoomsTab 
-            joinedRooms={joinedRooms.length > 0 ? joinedRooms : defaultJoinedRooms}
+            joinedRooms={joinedRooms}
             setIsModalOpen={setIsModalOpen}
             setModalType={setModalType}
           />
@@ -75,7 +77,8 @@ const TabContent = ({
             setActiveTab={setActiveTab}
             setIsModalOpen={setIsModalOpen}
             setModalType={setModalType}
-            achievements={achievements.length > 0 ? achievements : defaultAchievements}
+            user={user}
+            joinedRooms={joinedRooms}
           />
         );
     }

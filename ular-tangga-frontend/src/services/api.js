@@ -386,7 +386,63 @@ export const gameRoomService = {
       const response = await api.post('/game-rooms/join', { room_code: roomCode });
       return response.data;
     } catch (error) {
-      throw error.response?.data || error;
+      console.error('Join room error:', error);
+      // Return structured error instead of throwing
+      return {
+        status: 'error',
+        message: error.response?.data?.message || error.message || 'Failed to join room',
+        data: null
+      };
+    }
+  },
+
+  // Leave room (for students)
+  async leaveRoom(roomCode) {
+    try {
+      const response = await api.post('/game-rooms/leave', { room_code: roomCode });
+      return response.data;
+    } catch (error) {
+      console.error('Leave room error:', error);
+      // Return structured error instead of throwing
+      return {
+        status: 'error',
+        message: error.response?.data?.message || error.message || 'Failed to leave room',
+        data: null
+      };
+    }
+  },
+
+  // Update participant ready status (for students)
+  async updateParticipantReady(roomCode, isReady) {
+    try {
+      const response = await api.post('/game-rooms/update-ready', { 
+        room_code: roomCode, 
+        is_ready: isReady 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Update ready status error:', error);
+      return {
+        status: 'error',
+        message: error.response?.data?.message || error.message || 'Failed to update ready status',
+        data: null
+      };
+    }
+  },
+
+  // Get student's joined rooms
+  async getStudentRooms() {
+    try {
+      const response = await api.get('/game-rooms/student/joined');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching student rooms:', error);
+      // Return a structured error response instead of throwing
+      return {
+        status: 'error',
+        message: error.response?.data?.message || error.message || 'Failed to fetch student rooms',
+        data: []
+      };
     }
   },
 
