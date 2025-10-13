@@ -26,7 +26,7 @@ const Card = ({
     large: 'shadow-xl'
   };
 
-  const hoverStyles = hoverable ? 'hover:shadow-xl hover:-translate-y-1' : '';
+  const hoverStyles = hoverable ? 'hover:shadow-xl' : '';
   const clickableStyles = onClick ? 'cursor-pointer' : '';
 
   return (

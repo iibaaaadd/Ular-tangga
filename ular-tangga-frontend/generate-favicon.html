@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Favicon</title>
+</head>
+<body>
+    <canvas id="canvas" width="32" height="32" style="border: 1px solid black;"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#4F46E5'; // Purple background
+        ctx.fillRect(0, 0, 32, 32);
+        
+        // Text
+        ctx.fillStyle = '#FFFFFF'; // White text
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CB', 16, 16);
+        
+        // Download as PNG
+        const link = document.createElement('a');
+        link.download = 'favicon-32x32.png';
+        link.href = canvas.toDataURL();
+        document.body.appendChild(link);
+        link.click();
+    </script>
+</body>
+</html>

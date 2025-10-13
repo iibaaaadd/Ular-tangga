@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Card, Button, Modal, Input, Table, Select, Pagination, useConfirm } from "./ui";
+import { Card, Button, Modal, Input, Table, Select, Pagination, useConfirm, FilterSection } from "./ui";
 import Icon from "./ui/Icon";
 import { useToastContext } from "./ui/ToastProvider";
 import { questionService, materialService } from "../services/api";
@@ -43,9 +43,13 @@ const QuestionBank = () => {
     isTrue: true
   });
 
-  // Load questions when component mounts or tab/filter/page changes
+  // Load materials on mount
   useEffect(() => {
     loadMaterials();
+  }, []);
+
+  // Load questions when component mounts or tab/filter/page changes
+  useEffect(() => {
     loadQuestions();
   }, [activeTab, searchTerm, difficultyFilter, pagination.current_page, selectedMaterial]);
 
@@ -99,14 +103,14 @@ const QuestionBank = () => {
       
       // Update pagination info from response
       if (response.meta) {
-        setPagination({
-          current_page: response.meta.current_page || 1,
-          per_page: response.meta.per_page || 10,
+        setPagination(prev => ({
+          current_page: response.meta.current_page || prev.current_page,
+          per_page: response.meta.per_page || prev.per_page,
           total: response.meta.total || 0,
           last_page: response.meta.last_page || 1,
           from: response.meta.from || 0,
           to: response.meta.to || 0
-        });
+        }));
       }
     } catch (error) {
       console.error('Error loading questions:', error);
@@ -171,13 +175,8 @@ const QuestionBank = () => {
     }
     
     if (question.subtype === 'true_false') {
-      console.log('Transforming true_false question:', question); // Debug log
-      console.log('tfStatement (camelCase):', question.tfStatement); // Debug log
-      console.log('tf_statement (snake_case):', question.tf_statement); // Debug log
-      
       // Try both camelCase and snake_case
       const tfData = question.tfStatement || question.tf_statement;
-      console.log('Using tfData:', tfData); // Debug log
       
       const result = {
         ...baseData,
@@ -185,7 +184,6 @@ const QuestionBank = () => {
         correctAnswer: tfData?.is_true ? 'Benar' : 'Salah',
         is_true: tfData?.is_true // Get from relationship
       };
-      console.log('Transformed result:', result); // Debug log
       return result;
     }
 
@@ -581,8 +579,6 @@ const QuestionBank = () => {
           isTrue: true
         });
       } else if (activeTab === 'true_false') {
-        console.log('Opening true_false modal with question:', question); // Debug log
-        console.log('is_true value:', question.is_true); // Debug log
         setFormData({
           material_id: question.material_id || '',
           prompt: question.prompt || question.question || '',
@@ -595,7 +591,6 @@ const QuestionBank = () => {
           ],
           isTrue: question.is_true !== undefined ? question.is_true : true
         });
-        console.log('Set formData.isTrue to:', question.is_true !== undefined ? question.is_true : true); // Debug log
       }
     } else {
       // Creating new question
@@ -730,125 +725,66 @@ const QuestionBank = () => {
           </div>
 
           {/* Search and Filter Section */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* Search - Takes 6 columns on md and up */}
-            <div className="md:col-span-6">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-gray-700">Search</span>
-                  <Input
-                  type="text"
-                  placeholder="🔍 Cari berdasarkan pertanyaan soal..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  disabled={loading}
-                />
-              </div>
-            </div>
+          <FilterSection
+            title="🔍 Filter Bank Soal"
+            showResults={true}
+            totalItems={pagination.total}
+            filteredItems={questions.length}
+            hasActiveFilters={!!(searchTerm || selectedMaterial || difficultyFilter)}
+            onClearFilters={() => {
+              setSearchTerm('');
+              setSelectedMaterial('');
+              setDifficultyFilter('');
+              resetPagination();
+            }}
+          >
+            <FilterSection.Item label="🔍 Pencarian">
+              <Input
+                type="text"
+                placeholder="Cari berdasarkan pertanyaan soal..."
+                value={searchTerm}
+                onChange={handleSearch}
+                disabled={loading}
+              />
+            </FilterSection.Item>
             
-            {/* Material Filter - Takes 3 columns on md and up */}
-            <div className="md:col-span-3">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-gray-700">Materi</span>
-                <Select
-                  value={selectedMaterial}
-                  onChange={(e) => {
-                    setSelectedMaterial(e.target.value);
-                    resetPagination(); // Reset to page 1 when filter changes
-                  }}
-                  placeholder="Semua Materi"
-                  options={[
-                    {value: "", label: "Semua Materi"},
-                    ...materials.map(material => ({
-                      value: material.id,
-                      label: material.title
-                    }))
-                  ]}
-                  disabled={loading}
-                />
-              </div>
-            </div>
+            <FilterSection.Item label="📚 Materi">
+              <Select
+                value={selectedMaterial}
+                onChange={(e) => {
+                  setSelectedMaterial(e.target.value);
+                  resetPagination();
+                }}
+                options={[
+                  {value: "", label: "Semua Materi"},
+                  ...materials.map(material => ({
+                    value: material.id,
+                    label: material.title
+                  }))
+                ]}
+                disabled={loading}
+              />
+            </FilterSection.Item>
             
-            {/* Difficulty Filter - Takes 3 columns on md and up */}
-            <div className="md:col-span-3">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-gray-700">Tingkat</span>
-                <Select
-                  value={difficultyFilter}
-                  onChange={(e) => {
-                    setDifficultyFilter(e.target.value);
-                    resetPagination(); // Reset to page 1 when filter changes
-                  }}
-                  disabled={loading}
-                  placeholder="Semua"
-                  options={[
-                    { value: '', label: 'Semua Tingkat' },
-                    { value: 'easy', label: '😊 Mudah' },
-                    { value: 'medium', label: '🤔 Sedang' },
-                    { value: 'hard', label: '😰 Sulit' }
-                  ]}
-                />
-              </div>
-            </div>
-          </div>
+            <FilterSection.Item label="⭐ Tingkat Kesulitan">
+              <Select
+                value={difficultyFilter}
+                onChange={(e) => {
+                  setDifficultyFilter(e.target.value);
+                  resetPagination();
+                }}
+                disabled={loading}
+                options={[
+                  { value: '', label: 'Semua Tingkat' },
+                  { value: 'easy', label: '😊 Mudah' },
+                  { value: 'medium', label: '🤔 Sedang' },
+                  { value: 'hard', label: '😰 Sulit' }
+                ]}
+              />
+            </FilterSection.Item>
+          </FilterSection>
           
-          {/* Statistics */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-gray-50 px-4 py-3 rounded-lg mb-6 gap-3">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
-              <span className="font-medium">📊 Total: {pagination.total} soal</span>
-              {questions.length > 0 && (
-                <>
-                  <span className="hidden sm:inline text-gray-400">|</span>
-                  <span className="text-gray-500">
-                    Menampilkan {pagination.from} - {pagination.to} dari {pagination.total}
-                  </span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {searchTerm && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Pencarian: "{searchTerm}"
-                </span>
-              )}
-              {selectedMaterial && (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  Materi: {materials.find(m => m.id == selectedMaterial)?.title || 'Unknown'}
-                </span>
-              )}
-              {difficultyFilter && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  Filter: {difficultyFilter === 'easy' ? 'Mudah' : difficultyFilter === 'medium' ? 'Sedang' : 'Sulit'}
-                </span>
-              )}
-              {(searchTerm || selectedMaterial || difficultyFilter) && (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedMaterial('');
-                    setDifficultyFilter('');
-                    resetPagination();
-                  }}
-                  className="text-xs text-red-600 hover:text-red-800 p-1"
-                  title="Hapus Semua Filter"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {pagination.total === 0 ? (
+          {!loading && questions.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">📝</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -867,23 +803,21 @@ const QuestionBank = () => {
                 ➕ Tambah Soal Pertama
               </Button>
             </div>
+          ) : loading ? (
+            <div className="text-center py-12">
+              <svg className="animate-spin inline-block w-8 h-8 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-gray-500">Memuat data soal...</p>
+            </div>
           ) : (
             <>
-              {loading ? (
-                <div className="text-center py-12">
-                  <svg className="animate-spin inline-block w-8 h-8 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <p className="text-gray-500">Memuat data soal...</p>
-                </div>
-              ) : (
-                <Table 
-                  columns={getCurrentColumns()}
-                  data={getCurrentData()}
-                  onRowClick={(question) => handleOpenModal(question)}
-                />
-              )}
+              <Table 
+                columns={getCurrentColumns()}
+                data={getCurrentData()}
+                onRowClick={(question) => handleOpenModal(question)}
+              />
               
               {/* Pagination */}
               {pagination.total > 0 && (
@@ -1130,7 +1064,6 @@ const QuestionBank = () => {
                     onChange={(e) => {
                       if (e.target.checked) {
                         setFormData(prev => ({...prev, isTrue: true}));
-                        console.log('Set to TRUE:', true); // Debug log
                       }
                     }}
                   />
@@ -1146,7 +1079,6 @@ const QuestionBank = () => {
                     onChange={(e) => {
                       if (e.target.checked) {
                         setFormData(prev => ({...prev, isTrue: false}));
-                        console.log('Set to FALSE:', false); // Debug log
                       }
                     }}
                   />

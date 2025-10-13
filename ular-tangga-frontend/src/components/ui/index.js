@@ -11,3 +11,4 @@ export { default as Toggle } from './Toggle';
 export { default as Alert, useToast } from './Alert';
 export { default as ConfirmDialog, useConfirm, ConfirmProvider } from './ConfirmDialog';
 export { ToastProvider, useToastContext } from './ToastProvider';
+export { default as FilterSection } from './FilterSection';

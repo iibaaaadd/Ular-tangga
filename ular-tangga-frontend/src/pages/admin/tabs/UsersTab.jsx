@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Card, Button, Modal, Input, Table, Pagination, Select, useConfirm, ConfirmProvider,
-         Icon } from '../../../components/ui';
+         Icon, FilterSection } from '../../../components/ui';
 import { useToastContext } from '../../../components/ui/ToastProvider';
 import { userService } from '../../../services/api';
 
@@ -277,29 +277,39 @@ const UsersTab = () => {
           </Button>
         </div>
 
-        <div className="mb-4 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+        <FilterSection
+          title="🔍 Filter Data User"
+          showResults={true}
+          totalItems={pagination.total}
+          filteredItems={users.length}
+          hasActiveFilters={!!(searchTerm || roleFilter)}
+          onClearFilters={() => {
+            setSearchTerm('');
+            setRoleFilter('');
+          }}
+        >
+          <FilterSection.Item label="🔍 Pencarian" className="md:col-span-2">
             <Input
               type="text"
-              placeholder="🔍 Cari berdasarkan nama atau email..."
+              placeholder="Cari berdasarkan nama atau email..."
               value={searchTerm}
               onChange={handleSearch}
             />
-          </div>
-          <div className="sm:w-48">
+          </FilterSection.Item>
+          
+          <FilterSection.Item label="👥 Role">
             <Select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              placeholder="Filter Role"
               options={[
-                { value: '', label: '👥 Semua Role' },
+                { value: '', label: 'Semua Role' },
                 { value: 'admin', label: '👑 Admin' },
                 { value: 'teacher', label: '👨‍🏫 Teacher' },
                 { value: 'student', label: '👨‍🎓 Student' }
               ]}
             />
-          </div>
-        </div>
+          </FilterSection.Item>
+        </FilterSection>
         
         {loading && (
           <div className="text-center py-12">

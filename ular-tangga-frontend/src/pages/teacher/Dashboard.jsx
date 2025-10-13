@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
+import { ConfirmProvider } from '../../components/ui';
 import { DashboardHeader, TabNavigation, TabContent } from './index';
 
 const TeacherDashboard = () => {
@@ -8,13 +9,14 @@ const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabs = [
-    { id: 'overview', label: 'Dashboard', icon: '📊' },
-    { id: 'rooms', label: 'Kelas Saya', icon: '🏫' },
-    { id: 'games', label: 'Aktivitas Game', icon: '🎮' }
+    { id: 'overview', label: 'Dashboard', icon: 'chart' },
+    { id: 'rooms', label: 'Kelas Saya', icon: 'users' },
+    { id: 'games', label: 'Aktivitas Game', icon: 'gamepad2' }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 w-full overflow-x-hidden">
+    <ConfirmProvider>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 w-full overflow-x-hidden">
         <div className="p-4 sm:p-6">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -36,6 +38,7 @@ const TeacherDashboard = () => {
           </motion.div>
         </div>
       </div>
+    </ConfirmProvider>
   );
 };
 

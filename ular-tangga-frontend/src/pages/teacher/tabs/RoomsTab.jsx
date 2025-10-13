@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Card, Button, Table, Modal, Input, Select } from '../../../components/ui';
+import { Card, Button, Table, Modal, Input, Select, FilterSection } from '../../../components/ui';
 import { gameRoomService, materialService } from '../../../services/api';
 
 const RoomsTab = ({ setIsModalOpen, setModalType }) => {
@@ -15,14 +15,21 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
     max_participants: 30
   });
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    material: '',
+    sortBy: 'created_at'
+  });
+
   useEffect(() => {
     fetchRooms();
     fetchMaterials();
   }, []);
 
   useEffect(() => {
-    console.log('Materials state changed:', materials);
-    console.log('Materials count:', materials.length);
+    // Materials state tracking
   }, [materials]);
 
   const fetchRooms = async () => {
@@ -41,23 +48,12 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
 
   const fetchMaterials = async () => {
     try {
-      console.log('Fetching materials...');
       const response = await materialService.getMaterials();
-      console.log('Materials response full:', response);
-      console.log('Response structure:', {
-        status: response.status,
-        data: response.data,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data)
-      });
       
       // Check different possible response formats
       if (response && response.data) {
-        console.log('Setting materials from response.data:', response.data);
         setMaterials(response.data);
       } else if (response && Array.isArray(response)) {
-        console.log('Setting materials from direct response:', response);
         setMaterials(response);
       } else {
         console.error('Unexpected response format:', response);
@@ -114,6 +110,40 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
     }
   };
 
+  // Filter and sort rooms
+  const filteredRooms = rooms.filter(room => {
+    // Search filter
+    if (filters.search && !room.room_name.toLowerCase().includes(filters.search.toLowerCase()) && 
+        !room.room_code.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !room.material?.title?.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
+    }
+
+    // Status filter
+    if (filters.status && room.status !== filters.status) {
+      return false;
+    }
+
+    // Material filter
+    if (filters.material && room.material_id !== parseInt(filters.material)) {
+      return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    switch (filters.sortBy) {
+      case 'name':
+        return a.room_name.localeCompare(b.room_name);
+      case 'status':
+        return a.status.localeCompare(b.status);
+      case 'participants':
+        return (b.participants?.length || 0) - (a.participants?.length || 0);
+      case 'created_at':
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  });
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       waiting: { color: 'yellow', text: '⏳ Menunggu', bgColor: 'bg-yellow-100 text-yellow-800' },
@@ -128,6 +158,15 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
         {config.text}
       </span>
     );
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      status: '',
+      material: '',
+      sortBy: 'created_at'
+    });
   };
 
   const roomColumns = [
@@ -226,25 +265,82 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">🏫 Manajemen Kelas</h2>
           <Button onClick={() => {
-            console.log('Opening create modal, materials state:', materials);
+
             setIsCreateModalOpen(true);
           }}>
             ➕ Buat Kelas Baru
           </Button>
         </div>
 
-        {rooms.length > 0 ? (
+        {/* Filters Section */}
+        {rooms.length > 0 && (
+          <FilterSection
+            title="🔍 Filter Kelas Saya"
+            showResults={true}
+            totalItems={rooms.length}
+            filteredItems={filteredRooms.length}
+            hasActiveFilters={!!(filters.search || filters.status || filters.material)}
+            onClearFilters={clearFilters}
+          >
+            <FilterSection.Item label="🔍 Pencarian">
+              <Input
+                placeholder="Cari kelas, kode, atau materi..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              />
+            </FilterSection.Item>
+            
+            <FilterSection.Item label="📋 Status Kelas">
+              <Select
+                value={filters.status}
+                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                options={[
+                  { value: '', label: 'Semua Status' },
+                  { value: 'waiting', label: '⏳ Menunggu' },
+                  { value: 'studying', label: '📚 Belajar' },
+                  { value: 'playing', label: '🎮 Bermain' },
+                  { value: 'finished', label: '✅ Selesai' }
+                ]}
+              />
+            </FilterSection.Item>
+            
+            <FilterSection.Item label="📚 Materi">
+              <Select
+                value={filters.material}
+                onChange={(e) => setFilters(prev => ({ ...prev, material: e.target.value }))}
+                options={[
+                  { value: '', label: 'Semua Materi' },
+                  ...materials.map(material => ({
+                    value: material.id.toString(),
+                    label: material.title
+                  }))
+                ]}
+              />
+            </FilterSection.Item>
+          </FilterSection>
+        )}
+
+        {filteredRooms.length > 0 ? (
           <Table 
             columns={roomColumns}
-            data={rooms}
+            data={filteredRooms}
           />
-        ) : (
+        ) : rooms.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🏫</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Belum ada kelas</h3>
             <p className="text-gray-500 mb-6">Buat kelas pertama Anda untuk mulai mengajar!</p>
             <Button onClick={() => setIsCreateModalOpen(true)}>
               ➕ Buat Kelas Pertama
+            </Button>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Tidak ada kelas yang cocok</h3>
+            <p className="text-gray-500 mb-6">Coba ubah filter atau buat kelas baru!</p>
+            <Button variant="outline" onClick={clearFilters}>
+              🗑️ Reset Filter
             </Button>
           </div>
         )}
@@ -309,25 +405,15 @@ const RoomsTab = ({ setIsModalOpen, setModalType }) => {
             label="Pilih Materi"
             value={formData.material_id}
             onChange={(e) => {
-              console.log('Material selected:', e.target.value);
               setFormData(prev => ({ ...prev, material_id: e.target.value }));
             }}
-            options={(() => {
-              console.log('Creating options, materials state:', materials);
-              console.log('Materials length:', materials.length);
-              const options = [
-                { value: '', label: 'Pilih materi...' },
-                ...materials.map(material => {
-                  console.log('Mapping material:', material);
-                  return {
-                    value: material.id,
-                    label: material.title
-                  };
-                })
-              ];
-              console.log('Final options:', options);
-              return options;
-            })()}
+            options={[
+              { value: '', label: 'Pilih materi...' },
+              ...materials.map(material => ({
+                value: material.id,
+                label: material.title
+              }))
+            ]}
           />
           <Input 
             label="Maksimal Peserta" 
