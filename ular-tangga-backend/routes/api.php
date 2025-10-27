@@ -8,6 +8,7 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\GameRoomController;
 use App\Http\Controllers\GameSessionController;
+use App\Http\Controllers\SnakesLaddersController;
 
 // Public routes (no authentication required)
 Route::post('/register', [AuthController::class, 'register']);
@@ -46,9 +47,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{roomCode}/start-studying', [GameRoomController::class, 'startStudying']); // Start study phase
         Route::post('/{roomCode}/start-game', [GameRoomController::class, 'startGame']); // Start game
         Route::get('/{roomCode}/leaderboard', [GameRoomController::class, 'getLeaderboard']); // Get leaderboard
+        Route::get('/{roomCode}/game-sessions', [GameRoomController::class, 'getGameSessions']); // Get room game sessions
     });
     
-    // Game Session Routes
+    // Snakes and Ladders Game Routes
+    Route::prefix('snakes-ladders')->group(function () {
+        Route::get('/board', [SnakesLaddersController::class, 'getBoardState']); // Get board configuration
+        Route::get('/session/{sessionId}', [SnakesLaddersController::class, 'getGameSession']); // Get game session details
+        Route::post('/session/{sessionId}/roll-dice', [SnakesLaddersController::class, 'rollDice']); // Roll dice (first phase)
+        Route::post('/session/{sessionId}/submit-answer', [SnakesLaddersController::class, 'submitAnswer']); // Submit answer (second phase)
+        Route::get('/session/{sessionId}/history', [SnakesLaddersController::class, 'getGameHistory']); // Get move history
+        Route::get('/session/{sessionId}/stats', [SnakesLaddersController::class, 'getGameStats']); // Get game statistics
+        Route::post('/session/{sessionId}/leave', [SnakesLaddersController::class, 'leaveGame']); // Leave game
+    });
+
+    // Game Session Routes (Deprecated - keeping for compatibility)
     Route::prefix('game-sessions')->group(function () {
         Route::get('/room/{roomCode}/current-question', [GameSessionController::class, 'getCurrentQuestion']); // Get current question
         Route::post('/room/{roomCode}/next-question', [GameSessionController::class, 'startNextQuestion']); // Start next question (teacher)

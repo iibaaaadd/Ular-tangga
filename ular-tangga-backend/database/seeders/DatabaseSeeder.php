@@ -18,10 +18,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             MaterialSeeder::class,
             QuestionSeeder::class,
-            GameRoomSeeder::class,
-            RoomParticipantSeeder::class,
-            GameSessionSeeder::class,
-            StudentAnswerSeeder::class,
+            SnakeLadderSeeder::class,
         ]);
     }
 }

@@ -367,7 +367,7 @@ class GameRoomController extends Controller
     }
 
     /**
-     * Start game
+     * Start game - Create snakes and ladders game sessions
      */
     public function startGame(string $roomCode): JsonResponse
     {
@@ -395,10 +395,10 @@ class GameRoomController extends Controller
             ->where('is_ready', true)
             ->count();
 
-        if ($readyParticipants !== $totalParticipants || $totalParticipants === 0) {
+        if ($readyParticipants !== $totalParticipants || $totalParticipants < 2) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'All participants must be ready to start the game',
+                'message' => 'All participants must be ready and at least 2 participants required to start the game',
                 'data' => [
                     'ready_count' => $readyParticipants,
                     'total_count' => $totalParticipants
@@ -408,65 +408,78 @@ class GameRoomController extends Controller
 
         try {
             DB::transaction(function () use ($room) {
-                // Get questions for the material
-                $questions = Question::where('material_id', $room->material_id)
-                    ->inRandomOrder()
-                    ->get();
+                // Auto-create game sessions based on participants
+                $gameSessions = $room->createGameSessions();
 
-                if ($questions->isEmpty()) {
-                    throw new \Exception('No questions found for this material');
-                }
-
-                // Create game sessions for each question
-                $firstSession = null;
-                foreach ($questions as $index => $question) {
-                    $session = GameSession::create([
-                        'room_id' => $room->id,
-                        'question_id' => $question->id,
-                        'question_order' => $index + 1,
-                        'status' => $index === 0 ? 'active' : 'waiting', // Start first question immediately
-                        'time_limit' => 30, // Default 30 seconds
-                        'started_at' => $index === 0 ? now() : null
-                    ]);
-                    
-                    if ($index === 0) {
-                        $firstSession = $session;
-                    }
-                }
-
-                // Update room status
-                $room->update([
-                    'status' => 'playing',
-                    'started_at' => now()
-                ]);
+                // Start all game sessions
+                $startedSessions = $room->startAllGames();
 
                 // Load room with relationships
-                $room->load(['material', 'teacher', 'participants.student']);
+                $room->load(['material', 'teacher', 'participants.student', 'gameSessions.participants.participant']);
 
-                // Auto-advance will be handled by polling system in frontend
-
-                // Broadcast game started with first question
-                broadcast(new \App\Events\RoomUpdated($room, 'game_started', [
-                    'total_questions' => $questions->count(),
-                    'first_session' => $firstSession->load('question')
+                // Broadcast game started with session details
+                broadcast(new \App\Events\RoomUpdated($room, 'snakes_ladders_game_started', [
+                    'total_sessions' => count($gameSessions),
+                    'game_sessions' => $gameSessions->map(function($session) {
+                        return [
+                            'id' => $session->id,
+                            'game_name' => $session->game_name,
+                            'participants' => $session->participants()->with('participant')->get()
+                        ];
+                    })
                 ]));
             });
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Game started successfully',
-                'data' => $room
+                'message' => 'Snakes and Ladders games started successfully',
+                'data' => [
+                    'room' => $room,
+                    'game_sessions' => $room->gameSessions()->with('participants.participant')->get()
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to start game'
+                'message' => 'Failed to start games: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get leaderboard
+     * Get room game sessions
+     */
+    public function getGameSessions(string $roomCode): JsonResponse
+    {
+        $room = GameRoom::where('room_code', $roomCode)->first();
+
+        if (!$room) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Room not found'
+            ], 404);
+        }
+
+        $gameSessions = $room->gameSessions()->with([
+            'participants.participant',
+            'currentPlayer',
+            'moves' => function($query) {
+                $query->orderBy('turn_number', 'desc')->limit(10); // Last 10 moves
+            }
+        ])->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'room' => $room,
+                'game_sessions' => $gameSessions,
+                'snakes_ladders' => \App\Models\SnakeLadder::getActiveSnakesAndLadders()
+            ]
+        ]);
+    }
+
+    /**
+     * Get leaderboard - Updated for snakes and ladders
      */
     public function getLeaderboard(string $roomCode): JsonResponse
     {
@@ -479,21 +492,7 @@ class GameRoomController extends Controller
             ], 404);
         }
 
-        $leaderboard = DB::table('student_answers')
-            ->join('game_sessions', 'student_answers.game_session_id', '=', 'game_sessions.id')
-            ->join('users', 'student_answers.student_id', '=', 'users.id')
-            ->where('game_sessions.room_id', $room->id)
-            ->select(
-                'users.id',
-                'users.name',
-                DB::raw('SUM(student_answers.score) as total_score'),
-                DB::raw('COUNT(student_answers.id) as answered_questions'),
-                DB::raw('SUM(CASE WHEN student_answers.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers')
-            )
-            ->groupBy('users.id', 'users.name')
-            ->orderBy('total_score', 'desc')
-            ->orderBy('answered_questions', 'desc')
-            ->get();
+        $leaderboard = $room->getOverallLeaderboard();
 
         return response()->json([
             'status' => 'success',

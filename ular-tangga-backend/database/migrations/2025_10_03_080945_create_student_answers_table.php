@@ -11,19 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // This table is not needed for snakes and ladders game
+        // Game results will be tracked in game_moves and game_session_participants tables
+        // Keep this migration but create an empty table for backward compatibility
         Schema::create('student_answers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('game_session_id')->constrained('game_sessions')->onDelete('cascade');
-            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
-            $table->json('answer'); // Jawaban student (fleksibel untuk semua tipe soal)
-            $table->boolean('is_correct')->default(false);
-            $table->decimal('score', 8, 2)->default(0);
-            $table->timestamp('answered_at')->useCurrent();
-            $table->integer('answer_time_seconds'); // Waktu yang dibutuhkan untuk menjawab
             $table->timestamps();
-            
-            // Pastikan satu student hanya bisa menjawab satu kali per session
-            $table->unique(['game_session_id', 'student_id']);
+            $table->comment('Legacy table - not used in snakes and ladders game');
         });
     }
 
